@@ -1,8 +1,8 @@
-const { getKeywordResponses } = require('../data/keywords');
+const keywords = require('../data/keywords');
 
 class KeywordService {
     constructor() {
-        this.keywords = getKeywordResponses();
+        this.keywords = keywords;
     }
 
     getResponse(text) {
@@ -11,19 +11,11 @@ class KeywordService {
         // Check for exact matches first
         for (const [keyword, response] of Object.entries(this.keywords)) {
             if (cleanText.includes(keyword)) {
-                return this.formatResponse(response);
+                return response;
             }
         }
         
         return null;
-    }
-
-    formatResponse(response) {
-        return `${response.content}
-
-⚠️ <b>याद रखें:</b> ${response.disclaimer}
-
-📋 यह केवल शिक्षा के लिए है। गंभीर समस्या हो तो डॉक्टर से तुरंत मिलें।`;
     }
 }
 
