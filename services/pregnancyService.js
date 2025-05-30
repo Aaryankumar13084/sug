@@ -68,8 +68,8 @@ class PregnancyService {
                     reply_markup: {
                         inline_keyboard: [
                             [
-                                { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
-                                { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                                { text: 'Haan, upyogi tha ✅', callback_data: 'feedback_yes' },
+                                { text: 'Nahi, upyogi nahi tha ❌', callback_data: 'feedback_no' }
                             ]
                         ]
                     },

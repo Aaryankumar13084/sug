@@ -1,213 +1,456 @@
-const keywordResponses = {
-    'कब्ज़': {
-        content: `🚽 <b>कब्ज़ की समस्या का समाधान:</b>
 
-• रोज सुबह गुनगुना पानी पिएं
-• फाइबर युक्त भोजन करें - दलिया, ओट्स, सब्जियां
-• पपीता, अमरूद, और सेब खाएं
-• दिन में 8-10 गिलास पानी पिएं
-• हल्की सैर करें
-• प्रून (आलूबुखारा) का पानी पिएं
+const keywords = {
+    // Constipation related
+    'kabz': `🚽 Kabz ki Samasya:
 
-<b>बचने योग्य चीजें:</b>
-• ज्यादा चाय-कॉफी
-• तली हुई चीजें
-• मैदा से बनी चीजें`,
-        disclaimer: 'अगर 3 दिन से ज्यादा कब्ज़ हो तो डॉक्टर से मिलें।'
-    },
-    
-    'टीकाकरण': {
-        content: `💉 <b>गर्भावस्था में जरूरी टीके:</b>
+🔹 Karan:
+• Garbhavastha ke hormones
+• Iron ki dawai
+• Kam pani peena
+• Kam fiber
 
-<b>TT (टिटनेस) टीका:</b>
-• पहला टीका - गर्भावस्था के 4-6 महीने में
-• दूसरा टीका - पहले टीके के 4 सप्ताह बाद
+🔹 Samadhan:
+• Din mein 8-10 glass pani piyen
+• Fiber wala khana len (fruits, vegetables)
+• Thoda walk karen
+• Aam, papaya, anjeer khayen
 
-<b>फ्लू का टीका:</b>
-• कभी भी लगवा सकती हैं
-• माँ और बच्चे दोनों के लिए सुरक्षित
+⚠️ Koi bhi dawai lene se pehle doctor se pooche.`,
 
-<b>COVID-19 टीका:</b>
-• डॉक्टर की सलाह से लगवाएं
-• गर्भावस्था में सुरक्षित है`,
-        disclaimer: 'टीकाकरण से पहले हमेशा डॉक्टर से सलाह लें।'
-    },
-    
-    'आहार': {
-        content: `🥗 <b>गर्भावस्था में स्वस्थ आहार:</b>
+    'constipation': `🚽 Kabz ki Samasya:
 
-<b>जरूरी चीजें:</b>
-• दालें - मूंग, मसूर, चना
-• हरी पत्तेदार सब्जियां - पालक, मेथी
-• फल - केला, सेब, संतरा, अमरूद
-• दूध और दही
-• सूखे मेवे - बादाम, अखरोट (सीमित मात्रा में)
-• राजमा, छोले
-• रागी, ज्वार, बाजरा
+🔹 Karan:
+• Garbhavastha ke hormones
+• Iron ki dawai
+• Kam pani peena
+• Kam fiber
 
-<b>बचने योग्य:</b>
-• कच्चा मांस, कच्चा अंडा
-• अधिक कैफीन
-• जंक फूड
-• कच्चा पपीता`,
-        disclaimer: 'खाने से पहले सब कुछ अच्छी तरह धो लें और पका कर खाएं।'
-    },
-    
-    'चिंता': {
-        content: `😌 <b>गर्भावस्था में चिंता का समाधान:</b>
+🔹 Samadhan:
+• Din mein 8-10 glass pani piyen
+• Fiber wala khana len (fruits, vegetables)
+• Thoda walk karen
+• Aam, papaya, anjeer khayen
 
-<b>तनाव कम करने के तरीके:</b>
-• गहरी सांस लेने का अभ्यास करें
-• हल्का संगीत सुनें
-• प्रीनेटल योगा करें
-• अपने पार्टनर से बात करें
-• पॉजिटिव लोगों के साथ समय बिताएं
-• पर्याप्त नींद लें (7-8 घंटे)
+⚠️ Koi bhi dawai lene se pehle doctor se pooche.`,
 
-<b>मदद कब लें:</b>
-• लगातार रोना आना
-• नींद न आना
-• खाना न खाना
-• डर लगना`,
-        disclaimer: 'अगर चिंता ज्यादा हो तो काउंसलर या डॉक्टर से मिलें।'
-    },
-    
-    'व्यायाम': {
-        content: `🚶‍♀️ <b>गर्भावस्था में सुरक्षित व्यायाम:</b>
+    // Vaccination related
+    'tikakaran': `💉 Garbhavastha mein Tikakaran:
 
-<b>करने योग्य:</b>
-• रोज 30 मिनट तेज चलना
-• प्रीनेटल योगा
-• तैराकी (अगर करना आता है)
-• हल्की स्ट्रेचिंग
-• सांस की एक्सरसाइज
+🔹 Zaruri Tike:
+• Tetanus (TT) - 2 dose
+• Hepatitis B
+• Influenza (flu shot)
 
-<b>न करें:</b>
-• भारी वजन उठाना
-• कूदना या भागना
-• पेट के बल लेटना
-• बहुत झुकना
-• साइकिलिंग (आखिरी महीनों में)
+🔹 Samay:
+• TT 1st dose - 16 weeks
+• TT 2nd dose - 4 weeks baad
 
-<b>सावधानियां:</b>
-• व्यायाम से पहले डॉक्टर से पूछें
-• अगर सांस फूले तो रुकें`,
-        disclaimer: 'व्यायाम शुरू करने से पहले डॉक्टर की अनुमति लें।'
-    },
-    
-    'सिरदर्द': {
-        content: `🤕 <b>गर्भावस्था में सिरदर्द का इलाज:</b>
+🔹 Fayde:
+• Maa aur bacche ki suraksha
+• Infection se bachav
 
-<b>घरेलू उपाय:</b>
-• माथे पर ठंडी पट्टी रखें
-• गर्दन और कंधों की मालिश करें
-• अंधेरे कमरे में आराम करें
-• पर्याप्त पानी पिएं
-• नियमित खाना खाएं
-• तनाव कम करें
+⚠️ Apne doctor se tikakaran chart le kar poora karwayen.`,
 
-<b>बचने योग्य:</b>
-• तेज रोशनी
-• शोर-शराबा
-• भूखे रहना
-• ज्यादा स्क्रीन टाइम
+    'vaccination': `💉 Garbhavastha mein Tikakaran:
 
-<b>डॉक्टर से कब मिलें:</b>
-• अचानक तेज सिरदर्द
-• देखने में दिक्कत
-• उल्टी के साथ सिरदर्द`,
-        disclaimer: 'गर्भावस्था में बिना डॉक्टर की सलाह कोई दवा न लें।'
-    },
-    
-    'उल्टी': {
-        content: `🤢 <b>मॉर्निंग सिकनेस और उल्टी:</b>
+🔹 Zaruri Tike:
+• Tetanus (TT) - 2 dose
+• Hepatitis B
+• Influenza (flu shot)
 
-<b>राहत के उपाय:</b>
-• सुबह उठते ही सूखा बिस्कुट खाएं
-• अदरक की चाय पिएं
-• नींबू पानी पिएं
-• छोटे-छोटे मील्स लें
-• खाली पेट न रहें
-• तली हुई चीजों से बचें
-• पुदीने की चाय पिएं
+🔹 Samay:
+• TT 1st dose - 16 weeks
+• TT 2nd dose - 4 weeks baad
 
-<b>कब चिंता करें:</b>
-• दिन में 3-4 बार से ज्यादा उल्टी
-• कुछ भी खाना न रख पाना
-• वजन घटना
-• पेशाब कम आना`,
-        disclaimer: 'अगर लगातार उल्टी हो तो तुरंत डॉक्टर से मिलें।'
-    },
-    
-    'रक्तचाप': {
-        content: `💔 <b>गर्भावस्था में रक्तचाप:</b>
+🔹 Fayde:
+• Maa aur bacche ki suraksha
+• Infection se bachav
 
-<b>सामान्य रक्तचाप बनाए रखने के लिए:</b>
-• नमक कम खाएं
-• तनाव से बचें
-• नियमित हल्की एक्सरसाइज करें
-• पर्याप्त आराम करें
-• धूम्रपान न करें
+⚠️ Apne doctor se tikakaran chart le kar poora karwayen.`,
 
-<b>उच्च रक्तचाप के लक्षण:</b>
-• तेज सिरदर्द
-• देखने में धुंधलाहट
-• छाती में दर्द
-• सांस लेने में तकलीफ
+    // Diet related
+    'aahar': `🍎 Garbhavastha mein Aahar:
 
-<b>नियमित जांच:</b>
-• हर विजिट में BP चेक कराएं
-• घर पर भी मॉनिटर करें`,
-        disclaimer: 'BP बढ़ने पर तुरंत डॉक्टर से संपर्क करें।'
-    },
-    
-    'डायबिटीज': {
-        content: `🍯 <b>गर्भकालीन डायबिटीज:</b>
+🔹 Kya Khayen:
+• Hara patta vegetables
+• Fruits (aam, kela, seb)
+• Dal, chawal, roti
+• Doodh aur dahi
+• Dry fruits (badam, akhrot)
 
-<b>शुगर कंट्रोल के लिए:</b>
-• मीठा कम खाएं
-• रिफाइंड कार्ब्स से बचें
-• फाइबर युक्त भोजन करें
-• छोटे-छोटे मील्स लें
-• नियमित वॉक करें
-• वजन बढ़ने को कंट्रोल करें
+🔹 Kya Na Khayen:
+• Raw meat/fish
+• Alcohol
+• Jyada coffee/tea
+• Raw eggs
 
-<b>अच्छे कार्ब्स:</b>
-• दलिया, ओट्स
-• ब्राउन राइस
-• होल व्हीट
-• फल (सीमित मात्रा में)
+🔹 Tips:
+• Thoda-thoda kar ke khayen
+• Din mein 5-6 baar khayen
+• Pani jyada piyen
 
-<b>टेस्ट कराएं:</b>
-• 24-28 सप्ताह में ग्लूकोज टेस्ट`,
-        disclaimer: 'डायबिटीज होने पर डॉक्टर के निर्देशों का सख्ती से पालन करें।'
-    },
-    
-    'नींद': {
-        content: `😴 <b>गर्भावस्था में बेहतर नींद:</b>
+⚠️ Balanced diet lena zaroori hai.`,
 
-<b>अच्छी नींद के लिए:</b>
-• बाईं करवट लेकर सोएं
-• पैरों के बीच तकिया रखें
-• सोने से 2 घंटे पहले खाना खाएं
-• कैफीन से बचें
-• सोने से पहले गर्म दूध पिएं
-• कमरे को ठंडा और अंधेरा रखें
+    'diet': `🍎 Garbhavastha mein Aahar:
 
-<b>नींद में समस्या हो तो:</b>
-• रिलैक्सेशन तकनीक अपनाएं
-• हल्का संगीत सुनें
-• गर्म पानी से नहाएं
-• किताब पढ़ें
+🔹 Kya Khayen:
+• Hara patta vegetables
+• Fruits (aam, kela, seb)
+• Dal, chawal, roti
+• Doodh aur dahi
+• Dry fruits (badam, akhrot)
 
-<b>सोने का समय:</b>
-• 7-8 घंटे की नींद जरूरी है`,
-        disclaimer: 'नींद न आने की समस्या लगातार हो तो डॉक्टर से सलाह लें।'
-    }
+🔹 Kya Na Khayen:
+• Raw meat/fish
+• Alcohol
+• Jyada coffee/tea
+• Raw eggs
+
+🔹 Tips:
+• Thoda-thoda kar ke khayen
+• Din mein 5-6 baar khayen
+• Pani jyada piyen
+
+⚠️ Balanced diet lena zaroori hai.`,
+
+    // Anxiety related
+    'chinta': `😟 Garbhavastha mein Chinta:
+
+🔹 Aam Chintayen:
+• Bacche ka health
+• Delivery ki dar
+• Paisa ki tension
+• Body changes
+
+🔹 Kam Karne ke Tarike:
+• Deep breathing karen
+• Meditation
+• Family se baat karen
+• Achhi kitaben padhen
+• Music sunen
+
+🔹 Kab Doctor se Milen:
+• Jyada depression
+• Khana na khana
+• Neend na aana
+
+⚠️ Mental health bhi utna hi important hai.`,
+
+    'anxiety': `😟 Garbhavastha mein Chinta:
+
+🔹 Aam Chintayen:
+• Bacche ka health
+• Delivery ki dar
+• Paisa ki tension
+• Body changes
+
+🔹 Kam Karne ke Tarike:
+• Deep breathing karen
+• Meditation
+• Family se baat karen
+• Achhi kitaben padhen
+• Music sunen
+
+🔹 Kab Doctor se Milen:
+• Jyada depression
+• Khana na khana
+• Neend na aana
+
+⚠️ Mental health bhi utna hi important hai.`,
+
+    // Exercise related
+    'vyayam': `🤸‍♀️ Garbhavastha mein Vyayam:
+
+🔹 Safe Exercise:
+• Walking (din mein 30 min)
+• Swimming
+• Prenatal yoga
+• Light stretching
+
+🔹 Fayde:
+• Energy badhti hai
+• Mood achha rehta hai
+• Delivery mein aasan
+• Weight control
+
+🔹 Kya Na Karen:
+• Heavy lifting
+• Contact sports
+• Hot yoga
+• High intensity workout
+
+⚠️ Exercise shuru karne se pehle doctor se pooche.`,
+
+    'exercise': `🤸‍♀️ Garbhavastha mein Vyayam:
+
+🔹 Safe Exercise:
+• Walking (din mein 30 min)
+• Swimming
+• Prenatal yoga
+• Light stretching
+
+🔹 Fayde:
+• Energy badhti hai
+• Mood achha rehta hai
+• Delivery mein aasan
+• Weight control
+
+🔹 Kya Na Karen:
+• Heavy lifting
+• Contact sports
+• Hot yoga
+• High intensity workout
+
+⚠️ Exercise shuru karne se pehle doctor se pooche.`,
+
+    // Headache related
+    'sirdard': `🤕 Garbhavastha mein Sirdard:
+
+🔹 Karan:
+• Hormonal changes
+• Stress
+• Dehydration
+• Kam khana
+• Kam neend
+
+🔹 Rahat ke Tarike:
+• Forehead par thanda kapda
+• Neck aur shoulders massage
+• Andhere mein rest
+• Pani jyada piyen
+• Regular khana khayen
+
+🔹 Kab Doctor se Milen:
+• Bahut tez dard
+• Ulti ke saath
+• Vision problems
+
+⚠️ Pregnancy mein painkillers avoid karen.`,
+
+    'headache': `🤕 Garbhavastha mein Sirdard:
+
+🔹 Karan:
+• Hormonal changes
+• Stress
+• Dehydration
+• Kam khana
+• Kam neend
+
+🔹 Rahat ke Tarike:
+• Forehead par thanda kapda
+• Neck aur shoulders massage
+• Andhere mein rest
+• Pani jyada piyen
+• Regular khana khayen
+
+🔹 Kab Doctor se Milen:
+• Bahut tez dard
+• Ulti ke saath
+• Vision problems
+
+⚠️ Pregnancy mein painkillers avoid karen.`,
+
+    // Nausea/Vomiting related
+    'ulti': `🤢 Garbhavastha mein Ulti:
+
+🔹 Kab Hoti Hai:
+• Pehle 3 mahine mein jyada
+• Morning sickness
+• Smell se
+• Khali pet
+
+🔹 Kam Karne ke Tarike:
+• Subah uthte hi dry biscuit khayen
+• Thoda-thoda kar ke khayen
+• Ginger tea piyen
+• Lemon smell karen
+• Fresh air mein rahen
+
+🔹 Doctor se Mile Agar:
+• Din mein 3-4 baar se jyada ulti
+• Pani bhi nahi ruk raha
+• Weight kam ho raha
+
+⚠️ Dehydration se bachne ke liye fluids leti rahen.`,
+
+    'vomiting': `🤢 Garbhavastha mein Ulti:
+
+🔹 Kab Hoti Hai:
+• Pehle 3 mahine mein jyada
+• Morning sickness
+• Smell se
+• Khali pet
+
+🔹 Kam Karne ke Tarike:
+• Subah uthte hi dry biscuit khayen
+• Thoda-thoda kar ke khayen
+• Ginger tea piyen
+• Lemon smell karen
+• Fresh air mein rahen
+
+🔹 Doctor se Mile Agar:
+• Din mein 3-4 baar se jyada ulti
+• Pani bhi nahi ruk raha
+• Weight kam ho raha
+
+⚠️ Dehydration se bachne ke liye fluids leti rahen.`,
+
+    'nausea': `🤢 Garbhavastha mein Ulti:
+
+🔹 Kab Hoti Hai:
+• Pehle 3 mahine mein jyada
+• Morning sickness
+• Smell se
+• Khali pet
+
+🔹 Kam Karne ke Tarike:
+• Subah uthte hi dry biscuit khayen
+• Thoda-thoda kar ke khayen
+• Ginger tea piyen
+• Lemon smell karen
+• Fresh air mein rahen
+
+🔹 Doctor se Mile Agar:
+• Din mein 3-4 baar se jyada ulti
+• Pani bhi nahi ruk raha
+• Weight kam ho raha
+
+⚠️ Dehydration se bachne ke liye fluids leti rahen.`,
+
+    // Blood pressure related
+    'raktchap': `🩸 Garbhavastha mein Blood Pressure:
+
+🔹 High BP ke Lakshan:
+• Sirdard
+• Vision problems
+• Chest pain
+• Swelling (face, hands)
+
+🔹 Control ke Tarike:
+• Namak kam khayen
+• Regular walk
+• Stress kam karen
+• Weight control
+• Regular checkup
+
+🔹 Low BP ke Lakshan:
+• Chakkar aana
+• Weakness
+• Nausea
+
+⚠️ Regular BP check karawana zaruri hai.`,
+
+    'bp': `🩸 Garbhavastha mein Blood Pressure:
+
+🔹 High BP ke Lakshan:
+• Sirdard
+• Vision problems
+• Chest pain
+• Swelling (face, hands)
+
+🔹 Control ke Tarike:
+• Namak kam khayen
+• Regular walk
+• Stress kam karen
+• Weight control
+• Regular checkup
+
+🔹 Low BP ke Lakshan:
+• Chakkar aana
+• Weakness
+• Nausea
+
+⚠️ Regular BP check karawana zaruri hai.`,
+
+    // Diabetes related
+    'diabetes': `🍬 Garbhavastha mein Diabetes:
+
+🔹 Gestational Diabetes ke Lakshan:
+• Jyada pyaas
+• Bar-bar urine
+• Thakan
+• Blurred vision
+
+🔹 Control ke Tarike:
+• Balanced diet
+• Regular exercise
+• Sugar kam khayen
+• Regular monitoring
+• Doctor ki medicine
+
+🔹 Complications:
+• Baby ka weight jyada
+• Delivery mein problem
+• Future diabetes risk
+
+⚠️ Blood sugar regular check karwana zaruri hai.`,
+
+    'sugar': `🍬 Garbhavastha mein Diabetes:
+
+🔹 Gestational Diabetes ke Lakshan:
+• Jyada pyaas
+• Bar-bar urine
+• Thakan
+• Blurred vision
+
+🔹 Control ke Tarike:
+• Balanced diet
+• Regular exercise
+• Sugar kam khayen
+• Regular monitoring
+• Doctor ki medicine
+
+🔹 Complications:
+• Baby ka weight jyada
+• Delivery mein problem
+• Future diabetes risk
+
+⚠️ Blood sugar regular check karwana zaruri hai.`,
+
+    // Sleep related
+    'neend': `😴 Garbhavastha mein Neend:
+
+🔹 Neend ki Problems:
+• Bar-bar bathroom jana
+• Back pain
+• Heartburn
+• Baby ki movement
+
+🔹 Achhi Neend ke Tarike:
+• Left side mein soyen
+• Pillow support len
+• Caffeine avoid karen
+• Room thanda rakhen
+• Relaxing routine banaye
+
+🔹 Comfortable Position:
+• Left side best hai
+• Legs ke beech pillow
+• Back support
+
+⚠️ 7-8 ghante neend lena zaruri hai.`,
+
+    'sleep': `😴 Garbhavastha mein Neend:
+
+🔹 Neend ki Problems:
+• Bar-bar bathroom jana
+• Back pain
+• Heartburn
+• Baby ki movement
+
+🔹 Achhi Neend ke Tarike:
+• Left side mein soyen
+• Pillow support len
+• Caffeine avoid karen
+• Room thanda rakhen
+• Relaxing routine banaye
+
+🔹 Comfortable Position:
+• Left side best hai
+• Legs ke beech pillow
+• Back support
+
+⚠️ 7-8 ghante neend lena zaruri hai.`
 };
 
-function getKeywordResponses() {
-    return keywordResponses;
-}
-
-module.exports = { getKeywordResponses };
+module.exports = keywords;

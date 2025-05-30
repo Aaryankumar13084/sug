@@ -14,13 +14,13 @@ class BotService {
     initializeHandlers() {
         // Handle /start command
         this.bot.onText(/\/start/, this.handleStart.bind(this));
-        
+
         // Handle "गर्भ" keyword
         this.bot.onText(/गर्भ/, this.handleGarbh.bind(this));
-        
+
         // Handle all text messages
         this.bot.on('message', this.handleMessage.bind(this));
-        
+
         // Handle callback queries (Yes/No feedback)
         this.bot.on('callback_query', this.handleCallbackQuery.bind(this));
     }
@@ -28,20 +28,20 @@ class BotService {
     async handleStart(msg) {
         const chatId = msg.chat.id;
         const firstName = msg.from.first_name || 'बहन जी';
-        
+
         try {
             // Check if user already exists
             const existingUser = await User.findOne({ telegramId: chatId.toString() });
-            
+
             if (existingUser) {
                 await this.sendWelcomeBackMessage(chatId, firstName);
                 return;
             }
-            
+
             await this.sendConsentMessage(chatId, firstName);
         } catch (error) {
             console.error('Error in handleStart:', error);
-            await this.bot.sendMessage(chatId, 'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।');
+            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
         }
     }
 
@@ -78,7 +78,7 @@ class BotService {
     async sendWelcomeBackMessage(chatId, firstName) {
         const user = await User.findOne({ telegramId: chatId.toString() });
         const currentWeek = calculatePregnancyWeek(user.dueDate);
-        
+
         const message = `🙏 नमस्ते ${firstName}! आपका स्वागत है।
 
 आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
@@ -98,38 +98,38 @@ class BotService {
     async handleMessage(msg) {
         const chatId = msg.chat.id;
         const text = msg.text;
-        
+
         // Skip if it's a command we've already handled
         if (text === '/start' || text === 'गर्भ') return;
-        
+
         try {
             const userState = this.userStates.get(chatId);
-            
+
             // Handle due date input
             if (userState === 'awaiting_due_date') {
                 await this.handleDueDateInput(chatId, text, msg.from);
                 return;
             }
-            
+
             // Handle additional info input
             if (userState === 'awaiting_additional_info') {
                 await this.handleAdditionalInfo(chatId, text);
                 return;
             }
-            
+
             // Handle keyword-based queries
             await this.handleKeywordQuery(chatId, text);
-            
+
         } catch (error) {
             console.error('Error in handleMessage:', error);
-            await this.bot.sendMessage(chatId, 'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।');
+            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
         }
     }
 
     async handleCallbackQuery(callbackQuery) {
         const chatId = callbackQuery.message.chat.id;
         const data = callbackQuery.data;
-        
+
         try {
             if (data === 'consent_yes') {
                 await this.requestDueDate(chatId);
@@ -138,7 +138,7 @@ class BotService {
             } else if (data.startsWith('feedback_')) {
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
             }
-            
+
             // Answer the callback query
             await this.bot.answerCallbackQuery(callbackQuery.id);
         } catch (error) {
@@ -148,7 +148,7 @@ class BotService {
 
     async requestDueDate(chatId) {
         this.userStates.set(chatId, 'awaiting_due_date');
-        
+
         const message = `कृपया अपनी अनुमानित प्रसव तिथि बताएं (DD/MM/YYYY फॉर्मेट में):
 
 उदाहरण: 15/08/2024`;
@@ -158,21 +158,21 @@ class BotService {
 
     async handleDueDateInput(chatId, text, userInfo) {
         const dueDate = parseDate(text);
-        
+
         if (!dueDate || !isValidDate(dueDate)) {
             await this.bot.sendMessage(chatId, 'कृपया सही फॉर्मेट में तिथि दें (DD/MM/YYYY)\nउदाहरण: 15/08/2024');
             return;
         }
-        
+
         // Check if due date is reasonable (between now and 10 months from now)
         const now = new Date();
         const maxDate = new Date(now.getTime() + (10 * 30 * 24 * 60 * 60 * 1000));
-        
+
         if (dueDate < now || dueDate > maxDate) {
             await this.bot.sendMessage(chatId, 'कृपया एक वैध प्रसव तिथि दें (आज से 10 महीने के बीच)।');
             return;
         }
-        
+
         // Save user data
         try {
             const user = new User({
@@ -182,14 +182,14 @@ class BotService {
                 dueDate: dueDate,
                 consentGiven: true
             });
-            
+
             await user.save();
-            
+
             const currentWeek = calculatePregnancyWeek(dueDate);
             const formattedDate = dueDate.toLocaleDateString('hi-IN');
-            
+
             this.userStates.set(chatId, 'awaiting_additional_info');
-            
+
             const message = `✅ धन्यवाद! आपकी प्रसव तिथि ${formattedDate} सुरक्षित रूप से दर्ज कर ली गई है।
 
 आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
@@ -202,7 +202,7 @@ class BotService {
 या "छोड़ें" टाइप करें यदि आप यह जानकारी नहीं देना चाहती।`;
 
             await this.bot.sendMessage(chatId, message);
-            
+
         } catch (error) {
             console.error('Error saving user:', error);
             await this.bot.sendMessage(chatId, 'डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
@@ -214,29 +214,29 @@ class BotService {
             await this.completeRegistration(chatId);
             return;
         }
-        
+
         // Parse additional information (basic parsing)
         const user = await User.findOne({ telegramId: chatId.toString() });
         if (!user) return;
-        
+
         // Simple parsing for age (look for numbers)
         const ageMatch = text.match(/(\d+)/);
         if (ageMatch) {
             user.age = parseInt(ageMatch[1]);
         }
-        
+
         // Store location (everything else)
         if (text.length > 0 && !text.match(/^\d+$/)) {
             user.location = text;
         }
-        
+
         await user.save();
         await this.completeRegistration(chatId);
     }
 
     async completeRegistration(chatId) {
         this.userStates.delete(chatId);
-        
+
         const message = `🎉 पंजीकरण पूरा हुआ!
 
 अब आपको हर सप्ताह गर्भावस्था की जानकारी मिलेगी।
@@ -253,14 +253,14 @@ class BotService {
 स्वस्थ रहें! 🤱`;
 
         await this.bot.sendMessage(chatId, message);
-        
+
         // Send current week info immediately
         await this.pregnancyService.sendCurrentWeekInfo(this.bot, chatId);
     }
 
     async handleKeywordQuery(chatId, text) {
         const response = this.keywordService.getResponse(text);
-        
+
         if (response) {
             const options = {
                 reply_markup: {
@@ -272,7 +272,7 @@ class BotService {
                     ]
                 }
             };
-            
+
             await this.bot.sendMessage(chatId, response, options);
         } else {
             const helpMessage = `मैं निम्न विषयों पर जानकारी दे सकती हूँ:
@@ -296,7 +296,7 @@ class BotService {
 
     async handleFeedback(chatId, data, userId) {
         const helpful = data === 'feedback_yes';
-        
+
         try {
             await User.updateOne(
                 { telegramId: chatId.toString() },
@@ -309,14 +309,15 @@ class BotService {
                     } 
                 }
             );
-            
+
             const thankYouMessage = helpful ? 
                 'धन्यवाद! आपकी प्रतिक्रिया हमारे लिए महत्वपूर्ण है। 🙏' :
                 'धन्यवाद! हम बेहतर बनने की कोशिश करेंगे। 🙏';
-            
+
             await this.bot.sendMessage(chatId, thankYouMessage);
         } catch (error) {
             console.error('Error saving feedback:', error);
+            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
         }
     }
 }
