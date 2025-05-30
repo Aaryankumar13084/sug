@@ -50,23 +50,23 @@ class BotService {
     }
 
     async sendConsentMessage(chatId, firstName) {
-        const consentMessage = `🙏 नमस्ते ${firstName}! स्वागत है सुगम गर्भ में।
+        const consentMessage = `🙏 Namaste ${firstName}! Swagat hai Sugam Garbh mein.
 
-मैं आपकी गर्भावस्था के दौरान सप्ताहिक जानकारी और मार्गदर्शन प्रदान करूंगी।
+Main aapki garbhavastha ke dauran saptahik jaankari aur margdarshan pradan karungi.
 
-⚠️ महत्वपूर्ण सूचना:
-• यह केवल शिक्षा के लिए है, चिकित्सा सलाह नहीं
-• नियमित डॉक्टर की जांच कराते रहें
-• आपातकाल में तुरंत डॉक्टर से संपर्क करें
+⚠️ Mahattvpurn Suchna:
+• Yeh keval shiksha ke liye hai, chikitsa salaah nahi
+• Niyamit doctor ki jaanch karate rahen
+• Aapatkal mein turant doctor se sampark karen
 
-क्या आप इन शर्तों से सहमत हैं?`;
+Kya aap in sharton se sahmat hain?`;
 
         const options = {
             reply_markup: {
                 inline_keyboard: [
                     [
-                        { text: 'हाँ, मैं सहमत हूँ ✅', callback_data: 'consent_yes' },
-                        { text: 'नहीं ❌', callback_data: 'consent_no' }
+                        { text: 'Haan, main sahmat hun ✅', callback_data: 'consent_yes' },
+                        { text: 'Nahi ❌', callback_data: 'consent_no' }
                     ]
                 ]
             }
@@ -79,18 +79,18 @@ class BotService {
         const user = await User.findOne({ telegramId: chatId.toString() });
         const currentWeek = calculatePregnancyWeek(user.dueDate);
 
-        const message = `🙏 नमस्ते ${firstName}! आपका स्वागत है।
+        const message = `🙏 Namaste ${firstName}! Aapka swagat hai.
 
-आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
+Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
 
-आप निम्न में से कोई भी सवाल पूछ सकती हैं:
-• कब्ज़
-• टीकाकरण
-• आहार
-• चिंता
-• व्यायाम
+Aap nimn mein se koi bhi sawal pooch sakti hain:
+• Kabz
+• Tikakaran
+• Aahar
+• Chinta
+• Vyayam
 
-या /help टाइप करें अधिक जानकारी के लिए।`;
+Ya /help type karen adhik jaankari ke liye.`;
 
         await this.bot.sendMessage(chatId, message);
     }
@@ -134,7 +134,7 @@ class BotService {
             if (data === 'consent_yes') {
                 await this.requestDueDate(chatId);
             } else if (data === 'consent_no') {
-                await this.bot.sendMessage(chatId, 'समझ गया। यदि आप बदलना चाहती हैं तो /start फिर से टाइप करें।');
+                await this.bot.sendMessage(chatId, 'Samajh gaya. Yadi aap badalna chahti hain to /start phir se type karen.');
             } else if (data.startsWith('feedback_')) {
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
             }
@@ -149,9 +149,9 @@ class BotService {
     async requestDueDate(chatId) {
         this.userStates.set(chatId, 'awaiting_due_date');
 
-        const message = `कृपया अपनी अनुमानित प्रसव तिथि बताएं (DD/MM/YYYY फॉर्मेट में):
+        const message = `Kripaya apni anumanit prasav tithi batayen (DD/MM/YYYY format mein):
 
-उदाहरण: 15/08/2024`;
+Udaharan: 15/08/2024`;
 
         await this.bot.sendMessage(chatId, message);
     }
@@ -160,7 +160,7 @@ class BotService {
         const dueDate = parseDate(text);
 
         if (!dueDate || !isValidDate(dueDate)) {
-            await this.bot.sendMessage(chatId, 'कृपया सही फॉर्मेट में तिथि दें (DD/MM/YYYY)\nउदाहरण: 15/08/2024');
+            await this.bot.sendMessage(chatId, 'Kripaya sahi format mein tithi den (DD/MM/YYYY)\nUdaharan: 15/08/2024');
             return;
         }
 
@@ -169,7 +169,7 @@ class BotService {
         const maxDate = new Date(now.getTime() + (10 * 30 * 24 * 60 * 60 * 1000));
 
         if (dueDate < now || dueDate > maxDate) {
-            await this.bot.sendMessage(chatId, 'कृपया एक वैध प्रसव तिथि दें (आज से 10 महीने के बीच)।');
+            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh prasav tithi den (aaj se 10 mahine ke beech).');
             return;
         }
 
@@ -190,22 +190,22 @@ class BotService {
 
             this.userStates.set(chatId, 'awaiting_additional_info');
 
-            const message = `✅ धन्यवाद! आपकी प्रसव तिथि ${formattedDate} सुरक्षित रूप से दर्ज कर ली गई है।
+            const message = `✅ Dhanyawad! Aapki prasav tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
 
-आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
+Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
 
-अब कृपया कुछ अतिरिक्त जानकारी दें (वैकल्पिक):
-• आपकी उम्र
-• आपका शहर/गांव
-• क्या यह आपकी पहली गर्भावस्था है?
+Ab kripaya kuch atirikt jaankari den (vaikalpik):
+• Aapki umra
+• Aapka shehar/gaon
+• Kya yeh aapki pehli garbhavastha hai?
 
-या "छोड़ें" टाइप करें यदि आप यह जानकारी नहीं देना चाहती।`;
+Ya "Choden" type karen yadi aap yeh jaankari nahi dena chahti.`;
 
             await this.bot.sendMessage(chatId, message);
 
         } catch (error) {
             console.error('Error saving user:', error);
-            await this.bot.sendMessage(chatId, 'डेटा सेव करने में त्रुटि हुई। कृपया पुनः प्रयास करें।');
+            await this.bot.sendMessage(chatId, 'Data save karne mein truti hui. Kripaya punah prayas karen.');
         }
     }
 
@@ -237,20 +237,20 @@ class BotService {
     async completeRegistration(chatId) {
         this.userStates.delete(chatId);
 
-        const message = `🎉 पंजीकरण पूरा हुआ!
+        const message = `🎉 Panjikaran poora hua!
 
-अब आपको हर सप्ताह गर्भावस्था की जानकारी मिलेगी।
+Ab aapko har saptah garbhavastha ki jaankari milegi.
 
-आप कभी भी निम्न सवाल पूछ सकती हैं:
-• कब्ज़
-• टीकाकरण  
-• आहार
-• चिंता
-• व्यायाम
-• सिरदर्द
-• उल्टी
+Aap kabhi bhi nimn sawal pooch sakti hain:
+• Kabz
+• Tikakaran  
+• Aahar
+• Chinta
+• Vyayam
+• Sirdard
+• Ulti
 
-स्वस्थ रहें! 🤱`;
+Swasth rahen! 🤱`;
 
         await this.bot.sendMessage(chatId, message);
 
@@ -275,20 +275,20 @@ class BotService {
 
             await this.bot.sendMessage(chatId, response, options);
         } else {
-            const helpMessage = `मैं निम्न विषयों पर जानकारी दे सकती हूँ:
+            const helpMessage = `Main nimn vishyon par jaankari de sakti hun:
 
-• कब्ज़
-• टीकाकरण
-• आहार
-• चिंता  
-• व्यायाम
-• सिरदर्द
-• उल्टी
-• रक्तचाप
-• डायबिटीज
-• नींद
+• Kabz
+• Tikakaran
+• Aahar
+• Chinta  
+• Vyayam
+• Sirdard
+• Ulti
+• Raktchap
+• Diabetes
+• Neend
 
-कृपया इनमें से कोई एक शब्द टाइप करें।`;
+Kripaya inmein se koi ek shabd type karen.`;
 
             await this.bot.sendMessage(chatId, helpMessage);
         }
@@ -311,8 +311,8 @@ class BotService {
             );
 
             const thankYouMessage = helpful ? 
-                'धन्यवाद! आपकी प्रतिक्रिया हमारे लिए महत्वपूर्ण है। 🙏' :
-                'धन्यवाद! हम बेहतर बनने की कोशिश करेंगे। 🙏';
+                'Dhanyawad! Aapki pratikriya hamare liye mahattvpurn hai. 🙏' :
+                'Dhanyawad! Hum behtar banne ki koshish karenge. 🙏';
 
             await this.bot.sendMessage(chatId, thankYouMessage);
         } catch (error) {

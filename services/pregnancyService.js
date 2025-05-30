@@ -88,27 +88,27 @@ class PregnancyService {
     }
 
     formatWeeklyMessage(week, content) {
-        return `🤱 <b>गर्भावस्था का ${week}वां सप्ताह</b>
+        return `🤱 <b>Garbhavastha ka ${week}wan saptah</b>
 
-🍼 <b>शिशु का विकास:</b>
+🍼 <b>Shishu ka vikas:</b>
 ${content.babyDevelopment.map(point => `• ${point}`).join('\n')}
 
-👩 <b>माँ के शरीर में बदलाव:</b>
+👩 <b>Maa ke sharir mein badlav:</b>
 ${content.motherChanges.map(point => `• ${point}`).join('\n')}
 
-🥗 <b>पोषण की सलाह:</b>
+🥗 <b>Poshan ki salaah:</b>
 ${content.nutrition.map(point => `• ${point}`).join('\n')}
 
-⚠️ <b>चेतावनी के संकेत:</b>
+⚠️ <b>Chetavni ke sanket:</b>
 ${content.warningSigns.map(point => `• ${point}`).join('\n')}
-<b>इनमें से कोई भी लक्षण हो तो तुरंत डॉक्टर से मिलें!</b>
+<b>Inmein se koi bhi lakshan ho to turant doctor se milen!</b>
 
-💡 <b>सामान्य सलाह:</b>
+💡 <b>Samanya salaah:</b>
 ${content.generalAdvice.map(point => `• ${point}`).join('\n')}
 
-📋 <b>डिस्क्लेमर:</b> यह केवल शिक्षा के लिए है। नियमित डॉक्टर की जांच कराते रहें।
+📋 <b>Disclaimer:</b> Yeh keval shiksha ke liye hai. Niyamit doctor ki jaanch karate rahen.
 
-क्या यह जानकारी उपयोगी थी?`;
+Kya yeh jaankari upyogi thi?`;
     }
 }
 

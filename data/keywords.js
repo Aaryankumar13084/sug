@@ -250,10 +250,10 @@ const keywords = {
 
 ⚠️ Pregnancy mein painkillers avoid karen.`,
 
-    // Nausea/Vomiting related
-    'ulti': `🤢 Garbhavastha mein Ulti:
+    // Vomiting related
+    'ulti': `🤮 Garbhavastha mein Ulti:
 
-🔹 Kab Hoti Hai:
+🔹 Karan:
 • Pehle 3 mahine mein jyada
 • Morning sickness
 • Smell se
@@ -273,31 +273,9 @@ const keywords = {
 
 ⚠️ Dehydration se bachne ke liye fluids leti rahen.`,
 
-    'vomiting': `🤢 Garbhavastha mein Ulti:
+    'vomiting': `🤮 Garbhavastha mein Ulti:
 
-🔹 Kab Hoti Hai:
-• Pehle 3 mahine mein jyada
-• Morning sickness
-• Smell se
-• Khali pet
-
-🔹 Kam Karne ke Tarike:
-• Subah uthte hi dry biscuit khayen
-• Thoda-thoda kar ke khayen
-• Ginger tea piyen
-• Lemon smell karen
-• Fresh air mein rahen
-
-🔹 Doctor se Mile Agar:
-• Din mein 3-4 baar se jyada ulti
-• Pani bhi nahi ruk raha
-• Weight kam ho raha
-
-⚠️ Dehydration se bachne ke liye fluids leti rahen.`,
-
-    'nausea': `🤢 Garbhavastha mein Ulti:
-
-🔹 Kab Hoti Hai:
+🔹 Karan:
 • Pehle 3 mahine mein jyada
 • Morning sickness
 • Smell se
@@ -411,46 +389,46 @@ const keywords = {
     'neend': `😴 Garbhavastha mein Neend:
 
 🔹 Neend ki Problems:
-• Bar-bar bathroom jana
-• Back pain
-• Heartburn
-• Baby ki movement
+• Bar-bar bathroom jaana
+• Pet mein discomfort
+• Stress aur chinta
+• Hormonal changes
 
 🔹 Achhi Neend ke Tarike:
 • Left side mein soyen
-• Pillow support len
+• Pillow use karen (pet ke niche, legs ke beech)
 • Caffeine avoid karen
+• Regular routine banaye
 • Room thanda rakhen
-• Relaxing routine banaye
 
-🔹 Comfortable Position:
-• Left side best hai
-• Legs ke beech pillow
-• Back support
+🔹 Kab Doctor se Milen:
+• Bilkul neend nahi aana
+• Snoring bahut jyada
+• Sleep apnea ke symptoms
 
-⚠️ 7-8 ghante neend lena zaruri hai.`,
+⚠️ Achhi neend baby ke development ke liye zaroori hai.`,
 
     'sleep': `😴 Garbhavastha mein Neend:
 
 🔹 Neend ki Problems:
-• Bar-bar bathroom jana
-• Back pain
-• Heartburn
-• Baby ki movement
+• Bar-bar bathroom jaana
+• Pet mein discomfort
+• Stress aur chinta
+• Hormonal changes
 
 🔹 Achhi Neend ke Tarike:
 • Left side mein soyen
-• Pillow support len
+• Pillow use karen (pet ke niche, legs ke beech)
 • Caffeine avoid karen
+• Regular routine banaye
 • Room thanda rakhen
-• Relaxing routine banaye
 
-🔹 Comfortable Position:
-• Left side best hai
-• Legs ke beech pillow
-• Back support
+🔹 Kab Doctor se Milen:
+• Bilkul neend nahi aana
+• Snoring bahut jyada
+• Sleep apnea ke symptoms
 
-⚠️ 7-8 ghante neend lena zaruri hai.`
+⚠️ Achhi neend baby ke development ke liye zaroori hai.`
 };
 
 module.exports = keywords;
