@@ -175,11 +175,10 @@ Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
         }
 
         // Check if conception date is reasonable (should be in the past, within last 10 months)
-        const now = new Date();
-        const tenMonthsAgo = new Date(now.getTime() - (10 * 30 * 24 * 60 * 60 * 1000));
-
-        if (dueDate > now || dueDate < tenMonthsAgo) {
-            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (pichhle 10 mahine ke beech).');
+        const { isValidConceptionDate } = require('../utils/dateUtils');
+        
+        if (!isValidConceptionDate(dueDate)) {
+            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (aaj se pehle aur pichhle 10 mahine ke beech). \nUdaharan: 15/08/2024');
             return;
         }
 

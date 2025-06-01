@@ -1,17 +1,18 @@
-function calculatePregnancyWeek(dueDate) {
+function calculatePregnancyWeek(conceptionDate) {
     const now = new Date();
-    const due = new Date(dueDate);
+    const conception = new Date(conceptionDate);
     
-    // Calculate conception date (approximately 2 weeks before LMP)
-    // Pregnancy is calculated from Last Menstrual Period (LMP)
-    // Due date is 40 weeks from LMP
-    const lmpDate = new Date(due.getTime() - (40 * 7 * 24 * 60 * 60 * 1000));
+    // If conception date is in future, return 0
+    if (conception > now) {
+        return 0;
+    }
     
-    // Calculate weeks from LMP
-    const daysDifference = Math.floor((now - lmpDate) / (24 * 60 * 60 * 1000));
+    // Calculate weeks from conception date
+    const daysDifference = Math.floor((now - conception) / (24 * 60 * 60 * 1000));
     const weeks = Math.floor(daysDifference / 7);
     
-    return Math.max(0, Math.min(42, weeks)); // Cap between 0 and 42 weeks
+    // Return weeks (0 to 42 weeks maximum)
+    return Math.max(0, Math.min(42, weeks));
 }
 
 function isValidDate(date) {
@@ -56,17 +57,17 @@ function formatDateHindi(date) {
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-function isValidDueDate(date) {
+function isValidConceptionDate(date) {
     if (!isValidDate(date)) return false;
     
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+    today.setHours(23, 59, 59, 999); // Set to end of today
     
-    const tenMonthsFromNow = new Date();
-    tenMonthsFromNow.setMonth(tenMonthsFromNow.getMonth() + 10);
-    tenMonthsFromNow.setHours(23, 59, 59, 999); // Set to end of day
+    const tenMonthsAgo = new Date();
+    tenMonthsAgo.setMonth(tenMonthsAgo.getMonth() - 10);
+    tenMonthsAgo.setHours(0, 0, 0, 0); // Set to start of day
     
-    return date >= today && date <= tenMonthsFromNow;
+    return date >= tenMonthsAgo && date <= today;
 }
 
 module.exports = {
@@ -74,5 +75,5 @@ module.exports = {
     isValidDate,
     parseDate,
     formatDateHindi,
-    isValidDueDate
+    isValidConceptionDate
 };
