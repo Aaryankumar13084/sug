@@ -208,7 +208,7 @@ Ab kripaya kuch atirikt jaankari den (vaikalpik):
 • Aapka shehar/gaon
 • Kya yeh aapki pehli garbhavastha hai?
 
-Ya "Choden" type karen yadi aap yeh jaankari nahi dena chahti.`;
+Ya "Skip" type karen yadi aap yeh jaankari nahi dena chahti.`;
 
             await this.bot.sendMessage(chatId, message);
 
@@ -219,7 +219,7 @@ Ya "Choden" type karen yadi aap yeh jaankari nahi dena chahti.`;
     }
 
     async handleAdditionalInfo(chatId, text) {
-        if (text.toLowerCase() === 'छोड़ें' || text.toLowerCase() === 'skip') {
+        if (text.toLowerCase() === 'skip' || text.toLowerCase() === 'छोड़ें') {
             await this.completeRegistration(chatId);
             return;
         }
