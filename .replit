@@ -1,4 +1,5 @@
 modules = ["nodejs-20"]
+run = "node index.js"
 
 [nix]
 channel = "stable-24_05"
@@ -25,7 +26,7 @@ args = "npm install express node-telegram-bot-api mongoose node-cron dotenv cryp
 waitForPort = 8000
 
 [deployment]
-run = ["sh", "-c", "npm install express node-telegram-bot-api mongoose node-cron dotenv crypto && node index.js"]
+run = ["sh", "-c", "node index.js"]
 
 [[ports]]
 localPort = 8000
