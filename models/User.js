@@ -47,6 +47,18 @@ const userSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
+    }],
+    healthChecks: [{
+        status: {
+            type: String,
+            enum: ['good', 'issues'],
+            required: true
+        },
+        details: String,
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
     }]
 }, {
     timestamps: true

@@ -117,6 +117,12 @@ Ya /help type karen adhik jaankari ke liye.`;
                 return;
             }
 
+            // Handle health details input
+            if (userState === 'awaiting_health_details') {
+                await this.handleHealthDetails(chatId, text);
+                return;
+            }
+
             // Handle keyword-based queries
             await this.handleKeywordQuery(chatId, text);
 
@@ -137,6 +143,8 @@ Ya /help type karen adhik jaankari ke liye.`;
                 await this.bot.sendMessage(chatId, 'Samajh gaya. Yadi aap badalna chahti hain to /start phir se type karen.');
             } else if (data.startsWith('feedback_')) {
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
+            } else if (data.startsWith('health_')) {
+                await this.handleHealthCheck(chatId, data, callbackQuery.from.id);
             }
 
             // Answer the callback query
@@ -149,9 +157,11 @@ Ya /help type karen adhik jaankari ke liye.`;
     async requestDueDate(chatId) {
         this.userStates.set(chatId, 'awaiting_due_date');
 
-        const message = `Kripaya apni anumanit prasav tithi batayen (DD/MM/YYYY format mein):
+        const message = `Kripaya apni garbh dharan ki tithi batayen (DD/MM/YYYY format mein):
 
-Udaharan: 15/08/2024`;
+Udaharan: 15/02/2024
+
+Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
 
         await this.bot.sendMessage(chatId, message);
     }
@@ -164,12 +174,12 @@ Udaharan: 15/08/2024`;
             return;
         }
 
-        // Check if due date is reasonable (between now and 10 months from now)
+        // Check if conception date is reasonable (should be in the past, within last 10 months)
         const now = new Date();
-        const maxDate = new Date(now.getTime() + (10 * 30 * 24 * 60 * 60 * 1000));
+        const tenMonthsAgo = new Date(now.getTime() - (10 * 30 * 24 * 60 * 60 * 1000));
 
-        if (dueDate < now || dueDate > maxDate) {
-            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh prasav tithi den (aaj se 10 mahine ke beech).');
+        if (dueDate > now || dueDate < tenMonthsAgo) {
+            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (pichhle 10 mahine ke beech).');
             return;
         }
 
@@ -190,7 +200,7 @@ Udaharan: 15/08/2024`;
 
             this.userStates.set(chatId, 'awaiting_additional_info');
 
-            const message = `✅ Dhanyawad! Aapki prasav tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
+            const message = `✅ Dhanyawad! Aapki garbh dharan tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
 
 Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
 
@@ -317,6 +327,118 @@ Kripaya inmein se koi ek shabd type karen.`;
             await this.bot.sendMessage(chatId, thankYouMessage);
         } catch (error) {
             console.error('Error saving feedback:', error);
+            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+        }
+    }
+
+    async handleHealthCheck(chatId, data, userId) {
+        try {
+            if (data === 'health_good') {
+                const message = `✅ Bahut accha! Aap swasth hain.
+
+Yaad rakhen:
+• Niyamit doctor ki jaanch karayen
+• Bharpur aahar len
+• Achhi neend len
+• Halka vyayam karen
+
+Koi bhi pareshani ho to hmesha doctor se milen! 🩺`;
+
+                await this.bot.sendMessage(chatId, message);
+            } else if (data === 'health_issues') {
+                this.userStates.set(chatId, 'awaiting_health_details');
+                
+                const message = `🤕 Kya pareshani ho rahi hai? Kripaya vistaar se batayen:
+
+Jaise:
+• Sir dard
+• Ulti
+• Pet dard
+• Kamjori
+• Bukhar
+• Koi aur samasya
+
+Main aapki madad karne ki koshish karungi, lekin yaad rakhen - yadi koi gambhir lakshan hai to turant doctor se milen! 🚨`;
+
+                await this.bot.sendMessage(chatId, message);
+            }
+
+            // Save health status
+            await User.updateOne(
+                { telegramId: chatId.toString() },
+                { 
+                    $push: { 
+                        healthChecks: { 
+                            status: data === 'health_good' ? 'good' : 'issues',
+                            timestamp: new Date()
+                        } 
+                    } 
+                }
+            );
+
+        } catch (error) {
+            console.error('Error handling health check:', error);
+            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+        }
+    }
+
+    async handleHealthDetails(chatId, text) {
+        this.userStates.delete(chatId);
+
+        try {
+            // Save health details
+            await User.updateOne(
+                { telegramId: chatId.toString() },
+                { 
+                    $push: { 
+                        healthChecks: { 
+                            status: 'issues',
+                            details: text,
+                            timestamp: new Date()
+                        } 
+                    } 
+                }
+            );
+
+            // Provide basic advice based on common symptoms
+            let response = `🩺 Aapki pareshani: "${text}"\n\n`;
+            
+            const lowText = text.toLowerCase();
+            
+            if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
+                response += `💊 Sir dard ke liye:\n• Bharpur paani piye\n• Aaraam karen\n• Thanda sekan lagaye\n• Stress kam rakhen\n\n`;
+            }
+            
+            if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
+                response += `🤢 Ulti ke liye:\n• Thoda-thoda khaye\n• Adrak ki chai piye\n• Nimbu pani len\n• Sukhe biscuit khaye\n\n`;
+            }
+            
+            if (lowText.includes('kabz') || lowText.includes('constipation')) {
+                response += `🚽 Kabz ke liye:\n• Fiber wala khana len\n• Jyada paani piye\n• Halka vyayam karen\n• Papita, kela khaye\n\n`;
+            }
+            
+            if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
+                response += `😴 Kamjori ke liye:\n• Achhi neend len\n• Iron rich food khaye\n• Vitamin supplements len\n• Zyada aaraam karen\n\n`;
+            }
+
+            response += `⚠️ <b>Mahattvpurn:</b> Yadi lakshan badhte rahen ya tez bukhar, khoon aana, gambhir dard ho to TURANT doctor se milen!\n\n📱 Emergency: 102 (Ambulance)`;
+
+            const options = {
+                parse_mode: 'HTML',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: 'उपयोगी था ✅', callback_data: 'feedback_yes' },
+                            { text: 'डॉक्टर से मिलना है 🏥', callback_data: 'need_doctor' }
+                        ]
+                    ]
+                }
+            };
+
+            await this.bot.sendMessage(chatId, response, options);
+
+        } catch (error) {
+            console.error('Error handling health details:', error);
             await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
         }
     }

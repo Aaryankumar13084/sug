@@ -25,27 +25,33 @@ class PregnancyService {
                 const content = getWeeklyContent(currentWeek);
                 
                 if (content) {
-                    const message = this.formatWeeklyMessage(currentWeek, content);
+                    // First send weekly health check
+                    await this.sendWeeklyHealthCheck(bot, user);
                     
-                    const options = {
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
-                                    { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                    // Wait 2 seconds then send weekly pregnancy info
+                    setTimeout(async () => {
+                        const message = this.formatWeeklyMessage(currentWeek, content);
+                        
+                        const options = {
+                            reply_markup: {
+                                inline_keyboard: [
+                                    [
+                                        { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                        { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                                    ]
                                 ]
-                            ]
-                        },
-                        parse_mode: 'HTML'
-                    };
-                    
-                    await bot.sendMessage(user.telegramId, message, options);
+                            },
+                            parse_mode: 'HTML'
+                        };
+                        
+                        await bot.sendMessage(user.telegramId, message, options);
+                        
+                        console.log(`Sent week ${currentWeek} update to user ${user.telegramId}`);
+                    }, 2000);
                     
                     // Update last week sent
                     user.lastWeekSent = currentWeek;
                     await user.save();
-                    
-                    console.log(`Sent week ${currentWeek} update to user ${user.telegramId}`);
                 }
             }
         } catch (error) {
@@ -109,6 +115,44 @@ ${content.generalAdvice.map(point => `• ${point}`).join('\n')}
 📋 <b>Disclaimer:</b> Yeh keval shiksha ke liye hai. Niyamit doctor ki jaanch karate rahen.
 
 Kya yeh jaankari upyogi thi?`;
+    }
+
+    async sendWeeklyHealthCheck(bot, user) {
+        try {
+            const currentWeek = calculatePregnancyWeek(user.dueDate);
+            
+            const healthQuestions = [
+                "🩺 <b>Saptahik Swasthya Jaanch</b>",
+                "",
+                "Kripaya nimn prashnon ka uttar den:",
+                "",
+                "1️⃣ Aap kaisi mehsoos kar rahi hain?",
+                "2️⃣ Kya aapko koi nai pareshani ho rahi hai?", 
+                "3️⃣ Bhojan aur paani ka sevan sahi se ho raha hai?",
+                "4️⃣ Neend aachi aa rahi hai?",
+                "5️⃣ Shishu ki harkat mehsoos ho rahi hai? (20 weeks ke baad)",
+                "",
+                "Aap 'Sab theek hai' ya apni pareshani bata sakti hain."
+            ].join('\n');
+
+            const options = {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: 'सब ठीक है ✅', callback_data: 'health_good' },
+                            { text: 'कुछ परेशानी है 🤕', callback_data: 'health_issues' }
+                        ]
+                    ]
+                },
+                parse_mode: 'HTML'
+            };
+
+            await bot.sendMessage(user.telegramId, healthQuestions, options);
+            
+            console.log(`Sent weekly health check to user ${user.telegramId}`);
+        } catch (error) {
+            console.error(`Error sending health check to user ${user.telegramId}:`, error);
+        }
     }
 }
 
