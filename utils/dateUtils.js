@@ -19,15 +19,23 @@ function isValidDate(date) {
 }
 
 function parseDate(dateString) {
+    // Clean the input string - remove any extra characters
+    const cleanedString = dateString.trim();
+    
     // Parse DD/MM/YYYY format
     const regex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    const match = dateString.match(regex);
+    const match = cleanedString.match(regex);
     
     if (!match) return null;
     
     const day = parseInt(match[1], 10);
     const month = parseInt(match[2], 10) - 1; // JavaScript months are 0-indexed
     const year = parseInt(match[3], 10);
+    
+    // Check if day and month are in valid ranges
+    if (day < 1 || day > 31 || month < 0 || month > 11) {
+        return null;
+    }
     
     const date = new Date(year, month, day);
     
@@ -48,9 +56,23 @@ function formatDateHindi(date) {
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function isValidDueDate(date) {
+    if (!isValidDate(date)) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+    
+    const tenMonthsFromNow = new Date();
+    tenMonthsFromNow.setMonth(tenMonthsFromNow.getMonth() + 10);
+    tenMonthsFromNow.setHours(23, 59, 59, 999); // Set to end of day
+    
+    return date >= today && date <= tenMonthsFromNow;
+}
+
 module.exports = {
     calculatePregnancyWeek,
     isValidDate,
     parseDate,
-    formatDateHindi
+    formatDateHindi,
+    isValidDueDate
 };
