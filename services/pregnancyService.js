@@ -135,7 +135,21 @@ class PregnancyService {
                 await user.save();
             }
         } catch (error) {
-            console.error('Error in sendCurrentWeekInfo:', error);
+            console.error('Error sending current week info:', error);
+        }
+    }
+
+    async removeButtons(bot, chatId, messageId) {
+        try {
+            await bot.editMessageReplyMarkup(
+                { inline_keyboard: [] },
+                {
+                    chat_id: chatId,
+                    message_id: messageId
+                }
+            );
+        } catch (error) {
+            console.error('Error removing buttons:', error);
         }
     }
 

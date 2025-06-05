@@ -208,8 +208,12 @@ Or type /help for more information.`;
         const chatId = callbackQuery.message.chat.id;
         const data = callbackQuery.data;
         const firstName = callbackQuery.from.first_name || 'Sister';
+        const messageId = callbackQuery.message.message_id;
 
         try {
+            // Remove buttons after user responds
+            await this.removeButtons(chatId, messageId);
+
             if (data === 'lang_hindi') {
                 this.userStates.set(chatId, { language: 'hindi' });
                 await this.sendConsentMessage(chatId, firstName, 'hindi');
@@ -236,6 +240,20 @@ Or type /help for more information.`;
             await this.bot.answerCallbackQuery(callbackQuery.id);
         } catch (error) {
             console.error('Error in handleCallbackQuery:', error);
+        }
+    }
+
+    async removeButtons(chatId, messageId) {
+        try {
+            await this.bot.editMessageReplyMarkup(
+                { inline_keyboard: [] },
+                {
+                    chat_id: chatId,
+                    message_id: messageId
+                }
+            );
+        } catch (error) {
+            console.error('Error removing buttons:', error);
         }
     }
 
