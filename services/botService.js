@@ -195,7 +195,7 @@ Or type /help for more information.`;
         const text = msg.text;
 
         // Skip if it's a command we've already handled
-        if (text === '/start' || text === 'गर्भ') return;
+        if (text === '/start' || text === 'गर्भ' || text.startsWith('/meek')) return;
 
         try {
             const userState = this.userStates.get(chatId);
