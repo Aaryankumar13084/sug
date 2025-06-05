@@ -16,6 +16,22 @@ class PregnancyService {
         }
     }
 
+    async sendWeeklyHealthCheckToAll(bot) {
+        try {
+            const users = await User.find({ isActive: true });
+            console.log(`Sending weekly health check to ${users.length} users...`);
+
+            for (const user of users) {
+                // Send health check with a 5 second delay between users to avoid spam
+                setTimeout(async () => {
+                    await this.sendWeeklyHealthCheck(bot, user);
+                }, Math.random() * 5000);
+            }
+        } catch (error) {
+            console.error('Error in sendWeeklyHealthCheckToAll:', error);
+        }
+    }
+
     async checkAndSendWeeklyUpdate(bot, user) {
         try {
             const currentWeek = calculatePregnancyWeek(user.dueDate);

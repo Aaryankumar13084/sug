@@ -42,6 +42,18 @@ cron.schedule('0 9 * * *', async () => {
     timezone: "Asia/Kolkata"
 });
 
+// Schedule weekly health check - runs every Monday at 10 AM IST
+cron.schedule('0 10 * * 1', async () => {
+    console.log('Sending weekly health check to all users...');
+    try {
+        await pregnancyService.sendWeeklyHealthCheckToAll(bot);
+    } catch (error) {
+        console.error('Error in scheduled weekly health check:', error);
+    }
+}, {
+    timezone: "Asia/Kolkata"
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
