@@ -27,21 +27,22 @@ class BotService {
 
     async handleStart(msg) {
         const chatId = msg.chat.id;
-        const firstName = msg.from.first_name || 'बहन जी';
+        const firstName = msg.from.first_name || 'Sister';
 
         try {
             // Check if user already exists
             const existingUser = await User.findOne({ telegramId: chatId.toString() });
 
             if (existingUser) {
-                await this.sendWelcomeBackMessage(chatId, firstName);
+                await this.sendWelcomeBackMessage(chatId, firstName, existingUser.language);
                 return;
             }
 
-            await this.sendConsentMessage(chatId, firstName);
+            // Ask for language selection for new users
+            await this.sendLanguageSelection(chatId, firstName);
         } catch (error) {
             console.error('Error in handleStart:', error);
-            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+            await this.bot.sendMessage(chatId, 'Sorry, there was an error. Please try again later. / Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
         }
     }
 
@@ -49,8 +50,53 @@ class BotService {
         await this.handleStart(msg);
     }
 
-    async sendConsentMessage(chatId, firstName) {
-        const consentMessage = `🙏 Namaste ${firstName}! Swagat hai Sugam Garbh mein.
+    async sendLanguageSelection(chatId, firstName) {
+        const message = `🙏 Namaste ${firstName}! Welcome to Sugam Garbh!
+
+Please choose your preferred language:
+कृपया अपनी पसंदीदा भाषा चुनें:`;
+
+        const options = {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: 'हिंदी 🇮🇳', callback_data: 'lang_hindi' },
+                        { text: 'English 🇺🇸', callback_data: 'lang_english' }
+                    ]
+                ]
+            }
+        };
+
+        await this.bot.sendMessage(chatId, message, options);
+    }
+
+    async sendConsentMessage(chatId, firstName, language = 'hindi') {
+        let consentMessage, options;
+
+        if (language === 'english') {
+            consentMessage = `🙏 Welcome ${firstName}! Welcome to Sugam Garbh.
+
+I will provide weekly information and guidance during your pregnancy.
+
+⚠️ Important Notice:
+• This is for educational purposes only, not medical advice
+• Continue regular doctor check-ups
+• Contact doctor immediately in emergencies
+
+Do you agree to these terms?`;
+
+            options = {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: 'Yes, I agree ✅', callback_data: 'consent_yes' },
+                            { text: 'No ❌', callback_data: 'consent_no' }
+                        ]
+                    ]
+                }
+            };
+        } else {
+            consentMessage = `🙏 Namaste ${firstName}! Swagat hai Sugam Garbh mein.
 
 Main aapki garbhavastha ke dauran saptahik jaankari aur margdarshan pradan karungi.
 
@@ -61,25 +107,41 @@ Main aapki garbhavastha ke dauran saptahik jaankari aur margdarshan pradan karun
 
 Kya aap in sharton se sahmat hain?`;
 
-        const options = {
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: 'Haan, main sahmat hun ✅', callback_data: 'consent_yes' },
-                        { text: 'Nahi ❌', callback_data: 'consent_no' }
+            options = {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: 'Haan, main sahmat hun ✅', callback_data: 'consent_yes' },
+                            { text: 'Nahi ❌', callback_data: 'consent_no' }
+                        ]
                     ]
-                ]
-            }
-        };
+                }
+            };
+        }
 
         await this.bot.sendMessage(chatId, consentMessage, options);
     }
 
-    async sendWelcomeBackMessage(chatId, firstName) {
+    async sendWelcomeBackMessage(chatId, firstName, language = 'hindi') {
         const user = await User.findOne({ telegramId: chatId.toString() });
         const currentWeek = calculatePregnancyWeek(user.dueDate);
 
-        const message = `🙏 Namaste ${firstName}! Aapka swagat hai.
+        let message;
+        if (language === 'english') {
+            message = `🙏 Welcome back ${firstName}!
+
+You are currently in week ${currentWeek} of your pregnancy.
+
+You can ask me about any of these topics:
+• Constipation
+• Vaccination
+• Diet
+• Anxiety
+• Exercise
+
+Or type /help for more information.`;
+        } else {
+            message = `🙏 Namaste ${firstName}! Aapka swagat hai.
 
 Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
 
@@ -91,6 +153,7 @@ Aap nimn mein se koi bhi sawal pooch sakti hain:
 • Vyayam
 
 Ya /help type karen adhik jaankari ke liye.`;
+        }
 
         await this.bot.sendMessage(chatId, message);
     }
@@ -104,22 +167,24 @@ Ya /help type karen adhik jaankari ke liye.`;
 
         try {
             const userState = this.userStates.get(chatId);
+            const currentState = userState?.state || userState;
+            const language = userState?.language || 'hindi';
 
             // Handle due date input
-            if (userState === 'awaiting_due_date') {
-                await this.handleDueDateInput(chatId, text, msg.from);
+            if (currentState === 'awaiting_due_date') {
+                await this.handleDueDateInput(chatId, text, msg.from, language);
                 return;
             }
 
             // Handle additional info input
-            if (userState === 'awaiting_additional_info') {
-                await this.handleAdditionalInfo(chatId, text);
+            if (currentState === 'awaiting_additional_info') {
+                await this.handleAdditionalInfo(chatId, text, language);
                 return;
             }
 
             // Handle health details input
-            if (userState === 'awaiting_health_details') {
-                await this.handleHealthDetails(chatId, text);
+            if (currentState === 'awaiting_health_details') {
+                await this.handleHealthDetails(chatId, text, language);
                 return;
             }
 
@@ -128,19 +193,39 @@ Ya /help type karen adhik jaankari ke liye.`;
 
         } catch (error) {
             console.error('Error in handleMessage:', error);
-            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+            const userState = this.userStates.get(chatId);
+            const language = userState?.language || 'hindi';
+            
+            if (language === 'english') {
+                await this.bot.sendMessage(chatId, 'Sorry, there was an error. Please try again later.');
+            } else {
+                await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+            }
         }
     }
 
     async handleCallbackQuery(callbackQuery) {
         const chatId = callbackQuery.message.chat.id;
         const data = callbackQuery.data;
+        const firstName = callbackQuery.from.first_name || 'Sister';
 
         try {
-            if (data === 'consent_yes') {
-                await this.requestDueDate(chatId);
+            if (data === 'lang_hindi') {
+                this.userStates.set(chatId, { language: 'hindi' });
+                await this.sendConsentMessage(chatId, firstName, 'hindi');
+            } else if (data === 'lang_english') {
+                this.userStates.set(chatId, { language: 'english' });
+                await this.sendConsentMessage(chatId, firstName, 'english');
+            } else if (data === 'consent_yes') {
+                const userState = this.userStates.get(chatId) || { language: 'hindi' };
+                await this.requestDueDate(chatId, userState.language);
             } else if (data === 'consent_no') {
-                await this.bot.sendMessage(chatId, 'Samajh gaya. Yadi aap badalna chahti hain to /start phir se type karen.');
+                const userState = this.userStates.get(chatId) || { language: 'hindi' };
+                if (userState.language === 'english') {
+                    await this.bot.sendMessage(chatId, 'Understood. If you want to change your mind, type /start again.');
+                } else {
+                    await this.bot.sendMessage(chatId, 'Samajh gaya. Yadi aap badalna chahti hain to /start phir se type karen.');
+                }
             } else if (data.startsWith('feedback_')) {
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
             } else if (data.startsWith('health_')) {
@@ -154,23 +239,37 @@ Ya /help type karen adhik jaankari ke liye.`;
         }
     }
 
-    async requestDueDate(chatId) {
-        this.userStates.set(chatId, 'awaiting_due_date');
+    async requestDueDate(chatId, language = 'hindi') {
+        const currentState = this.userStates.get(chatId) || {};
+        this.userStates.set(chatId, { ...currentState, state: 'awaiting_due_date', language });
 
-        const message = `Kripaya apni garbh dharan ki tithi batayen (DD/MM/YYYY format mein):
+        let message;
+        if (language === 'english') {
+            message = `Please provide your conception date (DD/MM/YYYY format):
+
+Example: 15/02/2024
+
+If you don't remember the exact date, please provide your last period date.`;
+        } else {
+            message = `Kripaya apni garbh dharan ki tithi batayen (DD/MM/YYYY format mein):
 
 Udaharan: 15/02/2024
 
 Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
+        }
 
         await this.bot.sendMessage(chatId, message);
     }
 
-    async handleDueDateInput(chatId, text, userInfo) {
+    async handleDueDateInput(chatId, text, userInfo, language = 'hindi') {
         const dueDate = parseDate(text);
 
         if (!dueDate || !isValidDate(dueDate)) {
-            await this.bot.sendMessage(chatId, 'Kripaya sahi format mein tithi den (DD/MM/YYYY)\nUdaharan: 15/08/2024');
+            if (language === 'english') {
+                await this.bot.sendMessage(chatId, 'Please provide date in correct format (DD/MM/YYYY)\nExample: 15/08/2024');
+            } else {
+                await this.bot.sendMessage(chatId, 'Kripaya sahi format mein tithi den (DD/MM/YYYY)\nUdaharan: 15/08/2024');
+            }
             return;
         }
 
@@ -178,7 +277,11 @@ Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
         const { isValidConceptionDate } = require('../utils/dateUtils');
         
         if (!isValidConceptionDate(dueDate)) {
-            await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (aaj se pehle aur pichhle 10 mahine ke beech). \nUdaharan: 15/08/2024');
+            if (language === 'english') {
+                await this.bot.sendMessage(chatId, 'Please provide a valid conception date (in the past and within last 10 months).\nExample: 15/08/2024');
+            } else {
+                await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (aaj se pehle aur pichhle 10 mahine ke beech). \nUdaharan: 15/08/2024');
+            }
             return;
         }
 
@@ -186,10 +289,11 @@ Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
         try {
             const user = new User({
                 telegramId: chatId.toString(),
-                firstName: userInfo.first_name || 'उपयोगकर्ता',
+                firstName: userInfo.first_name || (language === 'english' ? 'User' : 'उपयोगकर्ता'),
                 username: userInfo.username,
                 dueDate: dueDate,
-                consentGiven: true
+                consentGiven: true,
+                language: language
             });
 
             await user.save();
