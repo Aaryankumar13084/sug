@@ -1,15 +1,18 @@
-const keywords = require('../data/keywords');
+const hindiKeywords = require('../data/keywords');
+const englishKeywords = require('../data/keywords-english');
 
 class KeywordService {
     constructor() {
-        this.keywords = keywords;
+        this.hindiKeywords = hindiKeywords;
+        this.englishKeywords = englishKeywords;
     }
 
-    getResponse(text) {
+    getResponse(text, language = 'hindi') {
         const cleanText = text.toLowerCase().trim();
+        const keywords = language === 'english' ? this.englishKeywords : this.hindiKeywords;
         
         // Check for exact matches first
-        for (const [keyword, response] of Object.entries(this.keywords)) {
+        for (const [keyword, response] of Object.entries(keywords)) {
             if (cleanText.includes(keyword)) {
                 return response;
             }

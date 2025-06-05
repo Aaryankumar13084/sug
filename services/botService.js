@@ -413,7 +413,7 @@ Swasth rahen! 🤱`;
         const user = await User.findOne({ telegramId: chatId.toString() });
         const language = user?.language || 'hindi';
         
-        const response = this.keywordService.getResponse(text);
+        const response = this.keywordService.getResponse(text, language);
 
         if (response) {
             let options;
