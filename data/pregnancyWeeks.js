@@ -1,3 +1,5 @@
+const { getWeeklyContentEnglish } = require('./pregnancyWeeks-english');
+
 const pregnancyWeeks = {
     1: {
         babyDevelopment: [
@@ -298,7 +300,11 @@ const pregnancyWeeks = {
     }
 };
 
-function getWeeklyContent(week) {
+function getWeeklyContent(week, language = 'hindi') {
+    if (language === 'english') {
+        return getWeeklyContentEnglish(week);
+    }
+    
     // For weeks not specifically defined, provide general content
     if (pregnancyWeeks[week]) {
         return pregnancyWeeks[week];

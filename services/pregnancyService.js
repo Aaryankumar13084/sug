@@ -7,7 +7,7 @@ class PregnancyService {
         try {
             const users = await User.find({ isActive: true });
             console.log(`Checking weekly updates for ${users.length} users...`);
-            
+
             for (const user of users) {
                 await this.checkAndSendWeeklyUpdate(bot, user);
             }
@@ -19,19 +19,19 @@ class PregnancyService {
     async checkAndSendWeeklyUpdate(bot, user) {
         try {
             const currentWeek = calculatePregnancyWeek(user.dueDate);
-            
+
             // Only send if this week hasn't been sent yet and it's a valid pregnancy week
             if (currentWeek > user.lastWeekSent && currentWeek >= 1 && currentWeek <= 42) {
-                const content = getWeeklyContent(currentWeek);
-                
+                const content = getWeeklyContent(currentWeek, user.language);
+
                 if (content) {
                     // First send weekly health check
                     await this.sendWeeklyHealthCheck(bot, user);
-                    
+
                     // Wait 2 seconds then send weekly pregnancy info
                     setTimeout(async () => {
                         const message = this.formatWeeklyMessage(currentWeek, content);
-                        
+
                         const options = {
                             reply_markup: {
                                 inline_keyboard: [
@@ -43,12 +43,12 @@ class PregnancyService {
                             },
                             parse_mode: 'HTML'
                         };
-                        
+
                         await bot.sendMessage(user.telegramId, message, options);
-                        
+
                         console.log(`Sent week ${currentWeek} update to user ${user.telegramId}`);
                     }, 2000);
-                    
+
                     // Update last week sent
                     user.lastWeekSent = currentWeek;
                     await user.save();
@@ -63,13 +63,13 @@ class PregnancyService {
         try {
             const user = await User.findOne({ telegramId: chatId.toString() });
             if (!user) return;
-            
+
             const currentWeek = calculatePregnancyWeek(user.dueDate);
-            const content = getWeeklyContent(currentWeek);
-            
+            const content = getWeeklyContent(currentWeek, user.language);
+
             if (content && currentWeek >= 1 && currentWeek <= 42) {
                 const message = this.formatWeeklyMessage(currentWeek, content);
-                
+
                 const options = {
                     reply_markup: {
                         inline_keyboard: [
@@ -81,9 +81,9 @@ class PregnancyService {
                     },
                     parse_mode: 'HTML'
                 };
-                
+
                 await bot.sendMessage(chatId, message, options);
-                
+
                 // Update last week sent
                 user.lastWeekSent = currentWeek;
                 await user.save();
@@ -120,7 +120,7 @@ Kya yeh jaankari upyogi thi?`;
     async sendWeeklyHealthCheck(bot, user) {
         try {
             const currentWeek = calculatePregnancyWeek(user.dueDate);
-            
+
             const healthQuestions = [
                 "🩺 <b>Saptahik Swasthya Jaanch</b>",
                 "",
@@ -148,7 +148,7 @@ Kya yeh jaankari upyogi thi?`;
             };
 
             await bot.sendMessage(user.telegramId, healthQuestions, options);
-            
+
             console.log(`Sent weekly health check to user ${user.telegramId}`);
         } catch (error) {
             console.error(`Error sending health check to user ${user.telegramId}:`, error);
