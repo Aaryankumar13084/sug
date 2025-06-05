@@ -24,16 +24,32 @@ class GeminiService {
             let languageContext, fullPrompt;
             
             if (language === 'english') {
-                languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English. 
-Keep your response clear, concise, and well-formatted. Use simple language that's easy to understand.
-Focus on practical advice for pregnancy-related topics. Use appropriate emojis to make the response more engaging.
-Format your response with clear sections using emojis like 🩺, 💡, ⚠️, 🍎, 💊, etc.`;
+                languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English.
+
+FORMATTING RULES:
+- Keep responses clear and well-organized
+- Use simple, easy-to-understand language
+- Start each main section with ONE emoji (🩺, 💡, ⚠️, 🍎, or 💊)
+- Use bullet points (•) for lists, not multiple emojis
+- Keep paragraphs short and readable
+- Limit emojis to section headers only
+- Focus on practical, actionable advice
+
+Provide helpful pregnancy guidance without overwhelming formatting.`;
                 fullPrompt = `${languageContext}\n\nQuestion: ${prompt}`;
             } else {
-                languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें। 
-अपना उत्तर स्पष्ट, संक्षिप्त और अच्छी तरह से स्वरूपित रखें। सरल भाषा का उपयोग करें जो समझने में आसान हो।
-गर्भावस्था संबंधी विषयों के लिए व्यावहारिक सलाह पर ध्यान दें। उत्तर को आकर्षक बनाने के लिए उपयुक्त इमोजी का उपयोग करें।
-🩺, 💡, ⚠️, 🍎, 💊, आदि जैसी इमोजी के साथ स्पष्ट खंडों में अपना उत्तर प्रारूपित करें।`;
+                languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें।
+
+फॉर्मेटिंग नियम:
+- उत्तर स्पष्ट और व्यवस्थित रखें
+- सरल, समझने योग्य भाषा का उपयोग करें
+- प्रत्येक मुख्य सेक्शन की शुरुआत एक इमोजी से करें (🩺, 💡, ⚠️, 🍎, या 💊)
+- सूचियों के लिए बुलेट पॉइंट (•) का उपयोग करें, कई इमोजी का नहीं
+- पैराग्राफ छोटे और पढ़ने योग्य रखें
+- इमोजी केवल सेक्शन हेडर तक सीमित रखें
+- व्यावहारिक, कार्यान्वित करने योग्य सलाह पर ध्यान दें
+
+बिना अत्यधिक फॉर्मेटिंग के उपयोगी गर्भावस्था मार्गदर्शन प्रदान करें।`;
                 fullPrompt = `${languageContext}\n\nप्रश्न: ${prompt}`;
             }
             
@@ -41,13 +57,17 @@ Format your response with clear sections using emojis like 🩺, 💡, ⚠️, �
             const response = await result.response;
             let responseText = response.text();
             
-            // Clean up formatting - improve bullet points and structure
+            // Clean up formatting - improve structure and readability
             responseText = responseText
                 .replace(/\*\*\*/g, '') // Remove triple asterisks
-                .replace(/\*\*([^*]+)\*\*/g, '📌 $1') // Convert **text** to 📌 text
+                .replace(/\*\*([^*]+)\*\*/g, '🔸 $1') // Convert **text** to 🔸 text (less frequent emoji)
                 .replace(/\*([^*]+)\*/g, '• $1') // Convert *text* to bullet points
-                .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove excessive line breaks
+                .replace(/\n\s*\n\s*\n+/g, '\n\n') // Remove excessive line breaks
                 .replace(/• •/g, '•') // Fix double bullet points
+                .replace(/🔸\s*🔸/g, '🔸') // Fix double pin emojis
+                .replace(/📌/g, '🔸') // Replace any remaining pin emojis with consistent ones
+                .replace(/\n{3,}/g, '\n\n') // Limit to maximum 2 line breaks
+                .replace(/^\s+|\s+$/gm, '') // Remove leading/trailing spaces from each line
                 .trim();
             
             return responseText;
