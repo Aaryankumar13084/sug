@@ -21,16 +21,33 @@ class GeminiService {
         }
 
         try {
-            // Add language context to the prompt
-            const languageContext = language === 'english' 
-                ? 'Please respond in English. You are a helpful pregnancy support assistant.'
-                : 'कृपया हिंदी में उत्तर दें। आप एक सहायक गर्भावस्था सहायक हैं।';
+            let languageContext, fullPrompt;
             
-            const fullPrompt = `${languageContext}\n\nUser question: ${prompt}`;
+            if (language === 'english') {
+                languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English. 
+Keep your response clear, concise, and well-formatted. Use simple language that's easy to understand.
+Focus on practical advice for pregnancy-related topics.`;
+                fullPrompt = `${languageContext}\n\nQuestion: ${prompt}`;
+            } else {
+                languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें। 
+अपना उत्तर स्पष्ट, संक्षिप्त और अच्छी तरह से स्वरूपित रखें। सरल भाषा का उपयोग करें जो समझने में आसान हो।
+गर्भावस्था संबंधी विषयों के लिए व्यावहारिक सलाह पर ध्यान दें।`;
+                fullPrompt = `${languageContext}\n\nप्रश्न: ${prompt}`;
+            }
             
             const result = await this.model.generateContent(fullPrompt);
             const response = await result.response;
-            return response.text();
+            let responseText = response.text();
+            
+            // Clean up formatting - remove excessive asterisks and format properly
+            responseText = responseText
+                .replace(/\*\*\*/g, '') // Remove triple asterisks
+                .replace(/\*\*/g, '*') // Convert double asterisks to single
+                .replace(/\*([^*]+)\*/g, '• $1') // Convert *text* to bullet points
+                .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove excessive line breaks
+                .trim();
+            
+            return responseText;
         } catch (error) {
             console.error('Error generating Gemini response:', error);
             return language === 'english' 

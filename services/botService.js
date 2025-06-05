@@ -70,8 +70,12 @@ class BotService {
             // Generate response using Gemini API
             const response = await this.geminiService.generateResponse(userQuestion, language);
             
-            // Send the AI-generated response
-            await this.bot.sendMessage(chatId, `🤖 AI Response:\n\n${response}`);
+            // Send the AI-generated response with clean formatting
+            const formattedResponse = language === 'english' 
+                ? `🤖 AI Assistant:\n\n${response}`
+                : `🤖 AI सहायक:\n\n${response}`;
+            
+            await this.bot.sendMessage(chatId, formattedResponse, { parse_mode: 'HTML' });
             
         } catch (error) {
             console.error('Error in handleMeekCommand:', error);
