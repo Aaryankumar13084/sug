@@ -485,6 +485,9 @@ Please type one of these words.`;
         const helpful = data === 'feedback_yes';
 
         try {
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+
             await User.updateOne(
                 { telegramId: chatId.toString() },
                 { 
@@ -497,45 +500,90 @@ Please type one of these words.`;
                 }
             );
 
-            const thankYouMessage = helpful ? 
-                'Dhanyawad! Aapki pratikriya hamare liye mahattvpurn hai. 🙏' :
-                'Dhanyawad! Hum behtar banne ki koshish karenge. 🙏';
+            let thankYouMessage;
+            if (language === 'english') {
+                thankYouMessage = helpful ? 
+                    'Thank you! Your feedback is valuable to us. 🙏' :
+                    'Thank you! We will try to improve. 🙏';
+            } else {
+                thankYouMessage = helpful ? 
+                    'धन्यवाद! आपकी प्रतिक्रिया हमारे लिए महत्वपूर्ण है। 🙏' :
+                    'धन्यवाद! हम बेहतर बनने की कोशिश करेंगे। 🙏';
+            }
 
             await this.bot.sendMessage(chatId, thankYouMessage);
         } catch (error) {
             console.error('Error saving feedback:', error);
-            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+            
+            const errorMessage = language === 'english' ? 
+                'Sorry, there was an error. Please try again later.' :
+                'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।';
+                
+            await this.bot.sendMessage(chatId, errorMessage);
         }
     }
 
     async handleHealthCheck(chatId, data, userId) {
         try {
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+
             if (data === 'health_good') {
-                const message = `✅ Bahut accha! Aap swasth hain.
+                let message;
+                if (language === 'english') {
+                    message = `✅ Great! You are healthy.
 
-Yaad rakhen:
-• Niyamit doctor ki jaanch karayen
-• Bharpur aahar len
-• Achhi neend len
-• Halka vyayam karen
+Remember:
+• Regular doctor check-ups
+• Nutritious diet
+• Good sleep
+• Light exercise
 
-Koi bhi pareshani ho to hmesha doctor se milen! 🩺`;
+If you have any problems, always consult your doctor! 🩺`;
+                } else {
+                    message = `✅ बहुत अच्छा! आप स्वस्थ हैं।
+
+याद रखें:
+• नियमित डॉक्टर की जांच कराएं
+• भरपूर आहार लें
+• अच्छी नींद लें
+• हल्का व्यायाम करें
+
+कोई भी परेशानी हो तो हमेशा डॉक्टर से मिलें! 🩺`;
+                }
 
                 await this.bot.sendMessage(chatId, message);
             } else if (data === 'health_issues') {
                 this.userStates.set(chatId, 'awaiting_health_details');
                 
-                const message = `🤕 Kya pareshani ho rahi hai? Kripaya vistaar se batayen:
+                let message;
+                if (language === 'english') {
+                    message = `🤕 What problems are you having? Please describe in detail:
 
-Jaise:
-• Sir dard
-• Ulti
-• Pet dard
-• Kamjori
-• Bukhar
-• Koi aur samasya
+Such as:
+• Headache
+• Vomiting
+• Stomach pain
+• Weakness
+• Fever
+• Any other problem
 
-Main aapki madad karne ki koshish karungi, lekin yaad rakhen - yadi koi gambhir lakshan hai to turant doctor se milen! 🚨`;
+I will try to help you, but remember - if there are any serious symptoms, immediately consult a doctor! 🚨`;
+                } else {
+                    message = `🤕 क्या परेशानी हो रही है? कृपया विस्तार से बताएं:
+
+जैसे:
+• सिर दर्द
+• उल्टी
+• पेट दर्द
+• कमजोरी
+• बुखार
+• कोई और समस्या
+
+मैं आपकी मदद करने की कोशिश करूंगी, लेकिन याद रखें - यदि कोई गंभीर लक्षण है तो तुरंत डॉक्टर से मिलें! 🚨`;
+                }
 
                 await this.bot.sendMessage(chatId, message);
             }
@@ -563,6 +611,9 @@ Main aapki madad karne ki koshish karungi, lekin yaad rakhen - yadi koi gambhir 
         this.userStates.delete(chatId);
 
         try {
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+
             // Save health details
             await User.updateOne(
                 { telegramId: chatId.toString() },
@@ -578,45 +629,90 @@ Main aapki madad karne ki koshish karungi, lekin yaad rakhen - yadi koi gambhir 
             );
 
             // Provide basic advice based on common symptoms
-            let response = `🩺 Aapki pareshani: "${text}"\n\n`;
-            
+            let response;
             const lowText = text.toLowerCase();
             
-            if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
-                response += `💊 Sir dard ke liye:\n• Bharpur paani piye\n• Aaraam karen\n• Thanda sekan lagaye\n• Stress kam rakhen\n\n`;
-            }
-            
-            if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
-                response += `🤢 Ulti ke liye:\n• Thoda-thoda khaye\n• Adrak ki chai piye\n• Nimbu pani len\n• Sukhe biscuit khaye\n\n`;
-            }
-            
-            if (lowText.includes('kabz') || lowText.includes('constipation')) {
-                response += `🚽 Kabz ke liye:\n• Fiber wala khana len\n• Jyada paani piye\n• Halka vyayam karen\n• Papita, kela khaye\n\n`;
-            }
-            
-            if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
-                response += `😴 Kamjori ke liye:\n• Achhi neend len\n• Iron rich food khaye\n• Vitamin supplements len\n• Zyada aaraam karen\n\n`;
-            }
-
-            response += `⚠️ <b>Mahattvpurn:</b> Yadi lakshan badhte rahen ya tez bukhar, khoon aana, gambhir dard ho to TURANT doctor se milen!\n\n📱 Emergency: 102 (Ambulance)`;
-
-            const options = {
-                parse_mode: 'HTML',
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: 'उपयोगी था ✅', callback_data: 'feedback_yes' },
-                            { text: 'डॉक्टर से मिलना है 🏥', callback_data: 'need_doctor' }
-                        ]
-                    ]
+            if (language === 'english') {
+                response = `🩺 Your concern: "${text}"\n\n`;
+                
+                if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
+                    response += `💊 For headache:\n• Drink plenty of water\n• Take rest\n• Apply cold compress\n• Reduce stress\n\n`;
                 }
-            };
+                
+                if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
+                    response += `🤢 For vomiting:\n• Eat small amounts\n• Drink ginger tea\n• Have lemon water\n• Eat dry biscuits\n\n`;
+                }
+                
+                if (lowText.includes('kabz') || lowText.includes('constipation')) {
+                    response += `🚽 For constipation:\n• Eat fiber-rich food\n• Drink more water\n• Light exercise\n• Eat papaya, banana\n\n`;
+                }
+                
+                if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
+                    response += `😴 For weakness:\n• Get good sleep\n• Eat iron-rich food\n• Take vitamin supplements\n• Rest more\n\n`;
+                }
+
+                response += `⚠️ <b>Important:</b> If symptoms worsen or you have high fever, bleeding, severe pain, contact doctor IMMEDIATELY!\n\n📱 Emergency: 102 (Ambulance)`;
+            } else {
+                response = `🩺 आपकी परेशानी: "${text}"\n\n`;
+                
+                if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
+                    response += `💊 सिर दर्द के लिए:\n• भरपूर पानी पिएं\n• आराम करें\n• ठंडा सेकाई लगाएं\n• तनाव कम रखें\n\n`;
+                }
+                
+                if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
+                    response += `🤢 उल्टी के लिए:\n• थोड़ा-थोड़ा खाएं\n• अदरक की चाय पिएं\n• नींबू पानी लें\n• सूखे बिस्कुट खाएं\n\n`;
+                }
+                
+                if (lowText.includes('kabz') || lowText.includes('constipation')) {
+                    response += `🚽 कब्ज के लिए:\n• फाइबर वाला खाना लें\n• ज्यादा पानी पिएं\n• हल्का व्यायाम करें\n• पपीता, केला खाएं\n\n`;
+                }
+                
+                if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
+                    response += `😴 कमजोरी के लिए:\n• अच्छी नींद लें\n• आयरन युक्त भोजन खाएं\n• विटामिन सप्लीमेंट लें\n• ज्यादा आराम करें\n\n`;
+                }
+
+                response += `⚠️ <b>महत्वपूर्ण:</b> यदि लक्षण बढ़ते रहें या तेज बुखार, खून आना, गंभीर दर्द हो तो तुरंत डॉक्टर से मिलें!\n\n📱 आपातकाल: 102 (एम्बुलेंस)`;
+            }
+
+            let options;
+            if (language === 'english') {
+                options = {
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'Helpful ✅', callback_data: 'feedback_yes' },
+                                { text: 'Need doctor 🏥', callback_data: 'need_doctor' }
+                            ]
+                        ]
+                    }
+                };
+            } else {
+                options = {
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                { text: 'डॉक्टर से मिलना है 🏥', callback_data: 'need_doctor' }
+                            ]
+                        ]
+                    }
+                };
+            }
 
             await this.bot.sendMessage(chatId, response, options);
 
         } catch (error) {
             console.error('Error handling health details:', error);
-            await this.bot.sendMessage(chatId, 'Kshama karen, kuch truti hui hai. Kripaya baad mein punah prayas karen.');
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+            
+            const errorMessage = language === 'english' ? 
+                'Sorry, there was an error. Please try again later.' :
+                'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।';
+                
+            await this.bot.sendMessage(chatId, errorMessage);
         }
     }
 }
