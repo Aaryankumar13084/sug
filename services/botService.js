@@ -96,23 +96,23 @@ Do you agree to these terms?`;
                 }
             };
         } else {
-            consentMessage = `🙏 Namaste ${firstName}! Swagat hai Sugam Garbh mein.
+            consentMessage = `🙏 नमस्ते ${firstName}! स्वागत है सुगम गर्भ में।
 
-Main aapki garbhavastha ke dauran saptahik jaankari aur margdarshan pradan karungi.
+मैं आपकी गर्भावस्था के दौरान साप्ताहिक जानकारी और मार्गदर्शन प्रदान करूंगी।
 
-⚠️ Mahattvpurn Suchna:
-• Yeh keval shiksha ke liye hai, chikitsa salaah nahi
-• Niyamit doctor ki jaanch karate rahen
-• Aapatkal mein turant doctor se sampark karen
+⚠️ महत्वपूर्ण सूचना:
+• यह केवल शिक्षा के लिए है, चिकित्सा सलाह नहीं
+• नियमित डॉक्टर की जांच कराते रहें
+• आपातकाल में तुरंत डॉक्टर से संपर्क करें
 
-Kya aap in sharton se sahmat hain?`;
+क्या आप इन शर्तों से सहमत हैं?`;
 
             options = {
                 reply_markup: {
                     inline_keyboard: [
                         [
-                            { text: 'Haan, main sahmat hun ✅', callback_data: 'consent_yes' },
-                            { text: 'Nahi ❌', callback_data: 'consent_no' }
+                            { text: 'हाँ, मैं सहमत हूँ ✅', callback_data: 'consent_yes' },
+                            { text: 'नहीं ❌', callback_data: 'consent_no' }
                         ]
                     ]
                 }
@@ -224,7 +224,7 @@ Or type /help for more information.`;
                 if (userState.language === 'english') {
                     await this.bot.sendMessage(chatId, 'Understood. If you want to change your mind, type /start again.');
                 } else {
-                    await this.bot.sendMessage(chatId, 'Samajh gaya. Yadi aap badalna chahti hain to /start phir se type karen.');
+                    await this.bot.sendMessage(chatId, 'समझ गया। यदि आप बदलना चाहती हैं तो /start फिर से टाइप करें।');
                 }
             } else if (data.startsWith('feedback_')) {
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
