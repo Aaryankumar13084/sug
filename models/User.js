@@ -59,6 +59,14 @@ const userSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         }
+    }],
+    conversationHistory: [{
+        question: String,
+        answer: String,
+        timestamp: {
+            type: Date,
+            default: Date.now
+        }
     }]
 }, {
     timestamps: true

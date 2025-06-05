@@ -224,8 +224,14 @@ Or type /help for more information.`;
                 return;
             }
 
-            // Handle keyword-based queries
-            await this.handleKeywordQuery(chatId, text);
+            // Handle automatic AI response for registered users
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            if (user && user.consentGiven) {
+                await this.handleAutomaticAIResponse(chatId, text, user);
+            } else {
+                // Handle keyword-based queries for unregistered users
+                await this.handleKeywordQuery(chatId, text);
+            }
 
         } catch (error) {
             console.error('Error in handleMessage:', error);
@@ -500,6 +506,87 @@ Stay healthy! 🤱`;
 
         // Send current week info immediately
         await this.pregnancyService.sendCurrentWeekInfo(this.bot, chatId);
+    }
+
+    async handleAutomaticAIResponse(chatId, text, user) {
+        try {
+            // Send typing indicator
+            await this.bot.sendChatAction(chatId, 'typing');
+            
+            // Get the last 5 questions from conversation history for context
+            const recentHistory = user.conversationHistory.slice(-5);
+            
+            // Build context from previous conversations
+            let contextPrompt = '';
+            if (recentHistory.length > 0) {
+                contextPrompt = user.language === 'english' 
+                    ? '\n\nPrevious conversation context:\n'
+                    : '\n\nपिछली बातचीत का संदर्भ:\n';
+                
+                recentHistory.forEach((entry, index) => {
+                    contextPrompt += user.language === 'english'
+                        ? `Q${index + 1}: ${entry.question}\nA${index + 1}: ${entry.answer}\n\n`
+                        : `प्र${index + 1}: ${entry.question}\nउ${index + 1}: ${entry.answer}\n\n`;
+                });
+            }
+            
+            // Add user's pregnancy week context
+            const currentWeek = calculatePregnancyWeek(user.dueDate);
+            const pregnancyContext = user.language === 'english'
+                ? `\n\nCurrent pregnancy context: The user is in week ${currentWeek} of pregnancy.`
+                : `\n\nवर्तमान गर्भावस्था संदर्भ: उपयोगकर्ता गर्भावस्था के ${currentWeek}वें सप्ताह में है।`;
+            
+            // Create the full prompt with context
+            const fullQuestion = text + contextPrompt + pregnancyContext;
+            
+            // Generate response using Gemini API with context
+            const response = await this.geminiService.generateResponse(fullQuestion, user.language);
+            
+            // Store the conversation in history (keep only last 10)
+            const conversationEntry = {
+                question: text,
+                answer: response,
+                timestamp: new Date()
+            };
+            
+            // Add to conversation history and limit to last 10 entries
+            user.conversationHistory.push(conversationEntry);
+            if (user.conversationHistory.length > 10) {
+                user.conversationHistory = user.conversationHistory.slice(-10);
+            }
+            
+            await user.save();
+            
+            // Send the AI-generated response with feedback buttons
+            const formattedResponse = user.language === 'english' 
+                ? `🤖 AI Assistant:\n\n${response}`
+                : `🤖 AI सहायक:\n\n${response}`;
+            
+            const options = {
+                reply_markup: {
+                    inline_keyboard: [
+                        user.language === 'english' 
+                            ? [
+                                { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
+                                { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
+                            ]
+                            : [
+                                { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                            ]
+                    ]
+                },
+                parse_mode: 'HTML'
+            };
+            
+            await this.bot.sendMessage(chatId, formattedResponse, options);
+            
+        } catch (error) {
+            console.error('Error in handleAutomaticAIResponse:', error);
+            
+            // Fallback to keyword-based response if AI fails
+            await this.handleKeywordQuery(chatId, text);
+        }
     }
 
     async handleKeywordQuery(chatId, text) {
