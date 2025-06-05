@@ -301,9 +301,23 @@ Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
             const currentWeek = calculatePregnancyWeek(dueDate);
             const formattedDate = dueDate.toLocaleDateString('hi-IN');
 
-            this.userStates.set(chatId, 'awaiting_additional_info');
+            const currentState = this.userStates.get(chatId) || {};
+            this.userStates.set(chatId, { ...currentState, state: 'awaiting_additional_info', language });
 
-            const message = `✅ Dhanyawad! Aapki garbh dharan tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
+            let message;
+            if (language === 'english') {
+                message = `✅ Thank you! Your conception date ${formattedDate} has been saved securely.
+
+You are currently in week ${currentWeek} of your pregnancy.
+
+Now please provide some additional information (optional):
+• Your age
+• Your city/town
+• Is this your first pregnancy?
+
+Or type "Skip" if you don't want to provide this information.`;
+            } else {
+                message = `✅ Dhanyawad! Aapki garbh dharan tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
 
 Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
 
@@ -313,18 +327,23 @@ Ab kripaya kuch atirikt jaankari den (vaikalpik):
 • Kya yeh aapki pehli garbhavastha hai?
 
 Ya "Skip" type karen yadi aap yeh jaankari nahi dena chahti.`;
+            }
 
             await this.bot.sendMessage(chatId, message);
 
         } catch (error) {
             console.error('Error saving user:', error);
-            await this.bot.sendMessage(chatId, 'Data save karne mein truti hui. Kripaya punah prayas karen.');
+            if (language === 'english') {
+                await this.bot.sendMessage(chatId, 'Error saving data. Please try again.');
+            } else {
+                await this.bot.sendMessage(chatId, 'Data save karne mein truti hui. Kripaya punah prayas karen.');
+            }
         }
     }
 
-    async handleAdditionalInfo(chatId, text) {
+    async handleAdditionalInfo(chatId, text, language = 'hindi') {
         if (text.toLowerCase() === 'skip' || text.toLowerCase() === 'छोड़ें') {
-            await this.completeRegistration(chatId);
+            await this.completeRegistration(chatId, language);
             return;
         }
 
@@ -344,13 +363,30 @@ Ya "Skip" type karen yadi aap yeh jaankari nahi dena chahti.`;
         }
 
         await user.save();
-        await this.completeRegistration(chatId);
+        await this.completeRegistration(chatId, language);
     }
 
-    async completeRegistration(chatId) {
+    async completeRegistration(chatId, language = 'hindi') {
         this.userStates.delete(chatId);
 
-        const message = `🎉 Panjikaran poora hua!
+        let message;
+        if (language === 'english') {
+            message = `🎉 Registration complete!
+
+You will now receive weekly pregnancy information.
+
+You can ask me about any of these topics anytime:
+• Constipation
+• Vaccination
+• Diet
+• Anxiety
+• Exercise
+• Headache
+• Vomiting
+
+Stay healthy! 🤱`;
+        } else {
+            message = `🎉 Panjikaran poora hua!
 
 Ab aapko har saptah garbhavastha ki jaankari milegi.
 
@@ -364,6 +400,7 @@ Aap kabhi bhi nimn sawal pooch sakti hain:
 • Ulti
 
 Swasth rahen! 🤱`;
+        }
 
         await this.bot.sendMessage(chatId, message);
 
@@ -372,23 +409,58 @@ Swasth rahen! 🤱`;
     }
 
     async handleKeywordQuery(chatId, text) {
+        // Get user's language preference
+        const user = await User.findOne({ telegramId: chatId.toString() });
+        const language = user?.language || 'hindi';
+        
         const response = this.keywordService.getResponse(text);
 
         if (response) {
-            const options = {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
-                            { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+            let options;
+            if (language === 'english') {
+                options = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
+                                { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
+                            ]
                         ]
-                    ]
-                }
-            };
+                    }
+                };
+            } else {
+                options = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                            ]
+                        ]
+                    }
+                };
+            }
 
             await this.bot.sendMessage(chatId, response, options);
         } else {
-            const helpMessage = `Main nimn vishyon par jaankari de sakti hun:
+            let helpMessage;
+            if (language === 'english') {
+                helpMessage = `I can provide information on the following topics:
+
+• Constipation
+• Vaccination
+• Diet
+• Anxiety
+• Exercise
+• Headache
+• Vomiting
+• Blood Pressure
+• Diabetes
+• Sleep
+
+Please type one of these words.`;
+            } else {
+                helpMessage = `Main nimn vishyon par jaankari de sakti hun:
 
 • Kabz
 • Tikakaran
@@ -402,6 +474,7 @@ Swasth rahen! 🤱`;
 • Neend
 
 Kripaya inmein se koi ek shabd type karen.`;
+            }
 
             await this.bot.sendMessage(chatId, helpMessage);
         }
