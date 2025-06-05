@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const PregnancyService = require('./pregnancyService');
 const KeywordService = require('./keywordService');
+const GeminiService = require('./geminiService');
 const { calculatePregnancyWeek, isValidDate, parseDate, isValidConceptionDate } = require('../utils/dateUtils');
 
 class BotService {
@@ -8,12 +9,16 @@ class BotService {
         this.bot = bot;
         this.pregnancyService = new PregnancyService();
         this.keywordService = new KeywordService();
+        this.geminiService = new GeminiService();
         this.userStates = new Map(); // Track user conversation states
     }
 
     initializeHandlers() {
         // Handle /start command
         this.bot.onText(/\/start/, this.handleStart.bind(this));
+
+        // Handle /meek command for Gemini AI responses
+        this.bot.onText(/\/meek (.+)/, this.handleMeekCommand.bind(this));
 
         // Handle "गर्भ" keyword
         this.bot.onText(/गर्भ/, this.handleGarbh.bind(this));
@@ -48,6 +53,33 @@ class BotService {
 
     async handleGarbh(msg) {
         await this.handleStart(msg);
+    }
+
+    async handleMeekCommand(msg, match) {
+        const chatId = msg.chat.id;
+        const userQuestion = match[1]; // Extract the text after /meek
+        
+        try {
+            // Get user's language preference
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user ? user.language : 'hindi';
+            
+            // Send typing indicator
+            await this.bot.sendChatAction(chatId, 'typing');
+            
+            // Generate response using Gemini API
+            const response = await this.geminiService.generateResponse(userQuestion, language);
+            
+            // Send the AI-generated response
+            await this.bot.sendMessage(chatId, `🤖 AI Response:\n\n${response}`);
+            
+        } catch (error) {
+            console.error('Error in handleMeekCommand:', error);
+            const errorMessage = user && user.language === 'english' 
+                ? 'Sorry, I could not process your request. Please try again later.'
+                : 'क्षमा करें, मैं आपका अनुरोध संसाधित नहीं कर सका। कृपया बाद में पुनः प्रयास करें।';
+            await this.bot.sendMessage(chatId, errorMessage);
+        }
     }
 
     async sendLanguageSelection(chatId, firstName) {
