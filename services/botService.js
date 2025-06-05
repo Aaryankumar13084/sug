@@ -17,6 +17,9 @@ class BotService {
         // Handle /start command
         this.bot.onText(/\/start/, this.handleStart.bind(this));
 
+        // Handle /help command
+        this.bot.onText(/\/help/, this.handleHelp.bind(this));
+
         // Handle /ask command for Gemini AI responses
         this.bot.onText(/\/ask (.+)/, this.handleAskCommand.bind(this));
 
@@ -53,6 +56,91 @@ class BotService {
 
     async handleGarbh(msg) {
         await this.handleStart(msg);
+    }
+
+    async handleHelp(msg) {
+        const chatId = msg.chat.id;
+        
+        try {
+            // Get user's language preference
+            const user = await User.findOne({ telegramId: chatId.toString() });
+            const language = user?.language || 'hindi';
+            
+            let helpMessage;
+            if (language === 'english') {
+                helpMessage = `🤖 <b>Sugam Garbh Bot Help</b>
+
+<b>📋 Available Commands:</b>
+• /start - Start using the bot or restart registration
+• /help - Show this help message
+
+<b>🤱 What I can help you with:</b>
+• <b>Automatic AI Responses:</b> Just type any pregnancy-related question and I'll respond intelligently using your conversation history
+• <b>Weekly Updates:</b> Get weekly pregnancy information based on your due date
+• <b>Health Checks:</b> Receive weekly health check reminders
+
+<b>💡 Common Topics:</b>
+• Diet and nutrition during pregnancy
+• Exercise and fitness recommendations
+• Managing morning sickness and discomfort
+• Vaccination schedule
+• Baby development information
+• Emotional support and anxiety management
+• Sleep issues during pregnancy
+• Warning signs to watch for
+
+<b>🌟 Features:</b>
+• Bilingual support (Hindi/English)
+• Personalized responses based on your pregnancy week
+• Context-aware AI using your previous questions
+• Secure data encryption
+• Feedback system to improve responses
+
+<b>🆘 Emergency:</b>
+If you have severe symptoms, contact your doctor immediately or call emergency services (102).
+
+Just type your question naturally - no commands needed!`;
+            } else {
+                helpMessage = `🤖 <b>सुगम गर्भ बॉट सहायता</b>
+
+<b>📋 उपलब्ध कमांड:</b>
+• /start - बॉट का उपयोग शुरू करें या पंजीकरण फिर से करें
+• /help - यह सहायता संदेश दिखाएं
+
+<b>🤱 मैं आपकी कैसे मदद कर सकती हूं:</b>
+• <b>स्वचालित AI प्रतिक्रियाएं:</b> बस कोई भी गर्भावस्था संबंधी प्रश्न टाइप करें और मैं आपके बातचीत के इतिहास का उपयोग करके समझदारी से जवाब दूंगी
+• <b>साप्ताहिक अपडेट:</b> आपकी प्रसव तिथि के आधार पर साप्ताहिक गर्भावस्था की जानकारी प्राप्त करें
+• <b>स्वास्थ्य जांच:</b> साप्ताहिक स्वास्थ्य जांच रिमाइंडर प्राप्त करें
+
+<b>💡 सामान्य विषय:</b>
+• गर्भावस्था के दौरान आहार और पोषण
+• व्यायाम और फिटनेस सुझाव
+• मॉर्निंग सिकनेस और परेशानी का प्रबंधन
+• टीकाकरण कार्यक्रम
+• बच्चे के विकास की जानकारी
+• भावनात्मक सहायता और चिंता प्रबंधन
+• गर्भावस्था के दौरान नींद की समस्याएं
+• देखने योग्य चेतावनी संकेत
+
+<b>🌟 विशेषताएं:</b>
+• द्विभाषी समर्थन (हिंदी/अंग्रेजी)
+• आपके गर्भावस्था सप्ताह के आधार पर व्यक्तिगत प्रतिक्रियाएं
+• आपके पिछले प्रश्नों का उपयोग करके संदर्भ-जागरूक AI
+• सुरक्षित डेटा एन्क्रिप्शन
+• प्रतिक्रियाओं को बेहतर बनाने के लिए फीडबैक सिस्टम
+
+<b>🆘 आपातकाल:</b>
+यदि आपको गंभीर लक्षण हैं, तो तुरंत अपने डॉक्टर से संपर्क करें या आपातकालीन सेवाओं (102) पर कॉल करें।
+
+बस अपना प्रश्न सामान्य रूप से टाइप करें - किसी कमांड की आवश्यकता नहीं!`;
+            }
+            
+            await this.bot.sendMessage(chatId, helpMessage, { parse_mode: 'HTML' });
+            
+        } catch (error) {
+            console.error('Error in handleHelp:', error);
+            await this.bot.sendMessage(chatId, 'Sorry, there was an error showing help. Please try again later. / Kshama karen, help dikhane mein truti hui. Kripaya baad mein punah prayas karen.');
+        }
     }
 
     async handleAskCommand(msg, match) {
@@ -199,7 +287,7 @@ Or type /help for more information.`;
         const text = msg.text;
 
         // Skip if it's a command we've already handled
-        if (text === '/start' || text === 'गर्भ' || text.startsWith('/ask')) return;
+        if (text === '/start' || text === '/help' || text === 'गर्भ' || text.startsWith('/ask')) return;
 
         try {
             const userState = this.userStates.get(chatId);
