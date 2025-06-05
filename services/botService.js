@@ -251,11 +251,11 @@ Example: 15/02/2024
 
 If you don't remember the exact date, please provide your last period date.`;
         } else {
-            message = `Kripaya apni garbh dharan ki tithi batayen (DD/MM/YYYY format mein):
+            message = `कृपया अपनी गर्भ धारण की तिथि बताएं (DD/MM/YYYY प्रारूप में):
 
-Udaharan: 15/02/2024
+उदाहरण: 15/02/2024
 
-Yadi aapko exact date yaad nahi hai to last periods ki date batayen.`;
+यदि आपको सटीक तारीख याद नहीं है तो अंतिम मासिक धर्म की तारीख बताएं।`;
         }
 
         await this.bot.sendMessage(chatId, message);
