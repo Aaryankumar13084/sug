@@ -189,8 +189,6 @@ ${content.generalAdvice.map(point => `• ${point}`).join('\n')}
 
     async sendWeeklyHealthCheck(bot, user) {
         try {
-            const currentWeek = calculatePregnancyWeek(user.dueDate);
-
             let healthQuestions, options;
 
             if (user.language === 'english') {

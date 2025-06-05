@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const PregnancyService = require('./pregnancyService');
 const KeywordService = require('./keywordService');
-const { calculatePregnancyWeek, isValidDate, parseDate } = require('../utils/dateUtils');
+const { calculatePregnancyWeek, isValidDate, parseDate, isValidConceptionDate } = require('../utils/dateUtils');
 
 class BotService {
     constructor(bot) {
@@ -274,8 +274,6 @@ If you don't remember the exact date, please provide your last period date.`;
         }
 
         // Check if conception date is reasonable (should be in the past, within last 10 months)
-        const { isValidConceptionDate } = require('../utils/dateUtils');
-        
         if (!isValidConceptionDate(dueDate)) {
             if (language === 'english') {
                 await this.bot.sendMessage(chatId, 'Please provide a valid conception date (in the past and within last 10 months).\nExample: 15/08/2024');
