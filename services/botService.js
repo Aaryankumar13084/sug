@@ -413,6 +413,7 @@ Stay healthy! 🤱`;
         const user = await User.findOne({ telegramId: chatId.toString() });
         const language = user?.language || 'hindi';
         
+        // Always use user's preferred language, regardless of input text language
         const response = this.keywordService.getResponse(text, language);
 
         if (response) {
