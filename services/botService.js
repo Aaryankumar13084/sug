@@ -234,6 +234,48 @@ Or type /help for more information.`;
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
             } else if (data.startsWith('health_')) {
                 await this.handleHealthCheck(chatId, data, callbackQuery.from.id);
+            } else if (data === 'need_doctor') {
+                const user = await User.findOne({ telegramId: chatId.toString() });
+                const language = user?.language || 'hindi';
+                
+                let doctorMessage;
+                if (language === 'english') {
+                    doctorMessage = `🏥 <b>Contact your doctor immediately!</b>
+
+📞 <b>Emergency Numbers:</b>
+• Ambulance: 102
+• Women Helpline: 1091
+• Medical Emergency: 108
+
+🩺 <b>Visit nearest hospital if you have:</b>
+• Heavy bleeding
+• Severe abdominal pain  
+• High fever
+• Continuous vomiting
+• Severe headache
+• Blurred vision
+
+<b>Your health and baby's health is most important!</b>`;
+                } else {
+                    doctorMessage = `🏥 <b>तुरंत डॉक्टर से मिलें!</b>
+
+📞 <b>आपातकालीन नंबर:</b>
+• एम्बुलेंस: 102
+• महिला हेल्पलाइन: 1091
+• मेडिकल एमर्जेंसी: 108
+
+🩺 <b>निकटतम अस्पताल जाएं अगर:</b>
+• अधिक खून बह रहा हो
+• पेट में तेज दर्द हो
+• तेज बुखार हो
+• लगातार उल्टी हो रही हो
+• गंभीर सिरदर्द हो
+• धुंधला दिखाई दे रहा हो
+
+<b>आपकी और आपके बच्चे की सेहत सबसे महत्वपूर्ण है!</b>`;
+                }
+
+                await this.bot.sendMessage(chatId, doctorMessage, { parse_mode: 'HTML' });
             }
 
             // Answer the callback query
