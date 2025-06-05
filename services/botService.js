@@ -141,18 +141,18 @@ You can ask me about any of these topics:
 
 Or type /help for more information.`;
         } else {
-            message = `🙏 Namaste ${firstName}! Aapka swagat hai.
+            message = `🙏 नमस्ते ${firstName}! आपका स्वागत है।
 
-Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
+आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
 
-Aap nimn mein se koi bhi sawal pooch sakti hain:
-• Kabz
-• Tikakaran
-• Aahar
-• Chinta
-• Vyayam
+आप निम्न में से कोई भी सवाल पूछ सकती हैं:
+• कब्ज
+• टीकाकरण
+• आहार
+• चिंता
+• व्यायाम
 
-Ya /help type karen adhik jaankari ke liye.`;
+या /help टाइप करें अधिक जानकारी के लिए।`;
         }
 
         await this.bot.sendMessage(chatId, message);
@@ -317,16 +317,16 @@ Now please provide some additional information (optional):
 
 Or type "Skip" if you don't want to provide this information.`;
             } else {
-                message = `✅ Dhanyawad! Aapki garbh dharan tithi ${formattedDate} surakshit roop se darj kar li gayi hai.
+                message = `✅ धन्यवाद! आपकी गर्भ धारण तिथि ${formattedDate} सुरक्षित रूप से दर्ज कर ली गई है।
 
-Aapki garbhavastha ka ${currentWeek}wan saptah chal raha hai.
+आपकी गर्भावस्था का ${currentWeek}वां सप्ताह चल रहा है।
 
-Ab kripaya kuch atirikt jaankari den (vaikalpik):
-• Aapki umra
-• Aapka shehar/gaon
-• Kya yeh aapki pehli garbhavastha hai?
+अब कृपया कुछ अतिरिक्त जानकारी दें (वैकल्पिक):
+• आपकी उम्र
+• आपका शहर/गांव
+• क्या यह आपकी पहली गर्भावस्था है?
 
-Ya "Skip" type karen yadi aap yeh jaankari nahi dena chahti.`;
+या "Skip" टाइप करें यदि आप यह जानकारी नहीं देना चाहती।`;
             }
 
             await this.bot.sendMessage(chatId, message);
@@ -386,20 +386,20 @@ You can ask me about any of these topics anytime:
 
 Stay healthy! 🤱`;
         } else {
-            message = `🎉 Panjikaran poora hua!
+            message = `🎉 पंजीकरण पूरा हुआ!
 
-Ab aapko har saptah garbhavastha ki jaankari milegi.
+अब आपको हर सप्ताह गर्भावस्था की जानकारी मिलेगी।
 
-Aap kabhi bhi nimn sawal pooch sakti hain:
-• Kabz
-• Tikakaran  
-• Aahar
-• Chinta
-• Vyayam
-• Sirdard
-• Ulti
+आप कभी भी निम्न सवाल पूछ सकती हैं:
+• कब्ज
+• टीकाकरण
+• आहार
+• चिंता
+• व्यायाम
+• सिरदर्द
+• उल्टी
 
-Swasth rahen! 🤱`;
+स्वस्थ रहें! 🤱`;
         }
 
         await this.bot.sendMessage(chatId, message);
@@ -460,20 +460,20 @@ Swasth rahen! 🤱`;
 
 Please type one of these words.`;
             } else {
-                helpMessage = `Main nimn vishyon par jaankari de sakti hun:
+                helpMessage = `मैं निम्न विषयों पर जानकारी दे सकती हूँ:
 
-• Kabz
-• Tikakaran
-• Aahar
-• Chinta  
-• Vyayam
-• Sirdard
-• Ulti
-• Raktchap
-• Diabetes
-• Neend
+• कब्ज
+• टीकाकरण
+• आहार
+• चिंता
+• व्यायाम
+• सिरदर्द
+• उल्टी
+• रक्तचाप
+• मधुमेह
+• नींद
 
-Kripaya inmein se koi ek shabd type karen.`;
+कृपया इनमें से कोई एक शब्द टाइप करें।`;
             }
 
             await this.bot.sendMessage(chatId, helpMessage);
