@@ -26,12 +26,14 @@ class GeminiService {
             if (language === 'english') {
                 languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English. 
 Keep your response clear, concise, and well-formatted. Use simple language that's easy to understand.
-Focus on practical advice for pregnancy-related topics.`;
+Focus on practical advice for pregnancy-related topics. Use appropriate emojis to make the response more engaging.
+Format your response with clear sections using emojis like 🩺, 💡, ⚠️, 🍎, 💊, etc.`;
                 fullPrompt = `${languageContext}\n\nQuestion: ${prompt}`;
             } else {
                 languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें। 
 अपना उत्तर स्पष्ट, संक्षिप्त और अच्छी तरह से स्वरूपित रखें। सरल भाषा का उपयोग करें जो समझने में आसान हो।
-गर्भावस्था संबंधी विषयों के लिए व्यावहारिक सलाह पर ध्यान दें।`;
+गर्भावस्था संबंधी विषयों के लिए व्यावहारिक सलाह पर ध्यान दें। उत्तर को आकर्षक बनाने के लिए उपयुक्त इमोजी का उपयोग करें।
+🩺, 💡, ⚠️, 🍎, 💊, आदि जैसी इमोजी के साथ स्पष्ट खंडों में अपना उत्तर प्रारूपित करें।`;
                 fullPrompt = `${languageContext}\n\nप्रश्न: ${prompt}`;
             }
             
@@ -39,12 +41,13 @@ Focus on practical advice for pregnancy-related topics.`;
             const response = await result.response;
             let responseText = response.text();
             
-            // Clean up formatting - remove excessive asterisks and format properly
+            // Clean up formatting - improve bullet points and structure
             responseText = responseText
                 .replace(/\*\*\*/g, '') // Remove triple asterisks
-                .replace(/\*\*/g, '*') // Convert double asterisks to single
+                .replace(/\*\*([^*]+)\*\*/g, '📌 $1') // Convert **text** to 📌 text
                 .replace(/\*([^*]+)\*/g, '• $1') // Convert *text* to bullet points
                 .replace(/\n\s*\n\s*\n/g, '\n\n') // Remove excessive line breaks
+                .replace(/• •/g, '•') // Fix double bullet points
                 .trim();
             
             return responseText;

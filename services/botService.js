@@ -17,8 +17,8 @@ class BotService {
         // Handle /start command
         this.bot.onText(/\/start/, this.handleStart.bind(this));
 
-        // Handle /meek command for Gemini AI responses
-        this.bot.onText(/\/meek (.+)/, this.handleMeekCommand.bind(this));
+        // Handle /ask command for Gemini AI responses
+        this.bot.onText(/\/ask (.+)/, this.handleAskCommand.bind(this));
 
         // Handle "गर्भ" keyword
         this.bot.onText(/गर्भ/, this.handleGarbh.bind(this));
@@ -55,9 +55,9 @@ class BotService {
         await this.handleStart(msg);
     }
 
-    async handleMeekCommand(msg, match) {
+    async handleAskCommand(msg, match) {
         const chatId = msg.chat.id;
-        const userQuestion = match[1]; // Extract the text after /meek
+        const userQuestion = match[1]; // Extract the text after /ask
         
         try {
             // Get user's language preference
@@ -199,7 +199,7 @@ Or type /help for more information.`;
         const text = msg.text;
 
         // Skip if it's a command we've already handled
-        if (text === '/start' || text === 'गर्भ' || text.startsWith('/meek')) return;
+        if (text === '/start' || text === 'गर्भ' || text.startsWith('/ask')) return;
 
         try {
             const userState = this.userStates.get(chatId);
