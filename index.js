@@ -54,6 +54,27 @@ cron.schedule('0 10 * * 1', async () => {
     timezone: "Asia/Kolkata"
 });
 
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        name: 'Sugam Garbh Telegram Bot',
+        description: 'A pregnancy tracking bot that provides weekly updates, health checks, and support in Hindi and English',
+        status: 'Active',
+        features: [
+            'Weekly pregnancy updates',
+            'Health check reminders', 
+            'Keyword-based responses',
+            'Bilingual support (Hindi/English)',
+            'Automated scheduling'
+        ],
+        endpoints: {
+            health: '/health',
+            root: '/'
+        },
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
