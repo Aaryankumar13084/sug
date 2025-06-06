@@ -601,8 +601,8 @@ Stay healthy! 🤱`;
             // Send typing indicator
             await this.bot.sendChatAction(chatId, 'typing');
             
-            // Get the last 5 questions from conversation history for context
-            const recentHistory = user.conversationHistory.slice(-5);
+            // Get the last 3 questions from conversation history for context
+            const recentHistory = user.conversationHistory.slice(-3);
             
             // Build context from previous conversations
             let contextPrompt = '';
@@ -630,17 +630,17 @@ Stay healthy! 🤱`;
             // Generate response using Gemini API with context
             const response = await this.geminiService.generateResponse(fullQuestion, user.language);
             
-            // Store the conversation in history (keep only last 10)
+            // Store the conversation in history (keep only last 3)
             const conversationEntry = {
                 question: text,
                 answer: response,
                 timestamp: new Date()
             };
             
-            // Add to conversation history and limit to last 10 entries
+            // Add to conversation history and limit to last 3 entries
             user.conversationHistory.push(conversationEntry);
-            if (user.conversationHistory.length > 10) {
-                user.conversationHistory = user.conversationHistory.slice(-10);
+            if (user.conversationHistory.length > 3) {
+                user.conversationHistory = user.conversationHistory.slice(-3);
             }
             
             await user.save();
