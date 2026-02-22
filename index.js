@@ -12,7 +12,7 @@ const app = express();
 const PORT = process.env.PORT || 8000;
 
 // Get bot token from environment
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const BOT_TOKEN = '8166845761:AAH0Ik831wdflah3Zum5CQ6sM0gocKvgMZI';
 
 if (!BOT_TOKEN) {
     console.error('TELEGRAM_BOT_TOKEN is required in environment variables');
