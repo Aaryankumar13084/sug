@@ -4,120 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= name %> - माँ और बच्चे की मुस्कान</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
     <style>
         :root {
-            --primary-pink: #ff4d6d;
-            --secondary-pink: #ff85a2;
-            --soft-pink: #fff5f8;
-            --dark-pink: #c9184a;
+            --accent-color: #ff6b6b;
+            --hero-gradient: linear-gradient(135deg, #4ecdc4 0%, #45b7af 100%);
         }
-        body { background-color: var(--soft-pink); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #444; }
         .hero { 
-            background: linear-gradient(135deg, var(--primary-pink), var(--secondary-pink)); 
+            background: var(--hero-gradient); 
             color: white; 
-            padding: 100px 0 120px; 
-            border-radius: 0 0 80px 80px;
-            box-shadow: 0 10px 30px rgba(255, 77, 109, 0.2);
-        }
-        .navbar { background: transparent !important; padding: 20px 0; }
-        .navbar-brand { color: white !important; font-weight: 800; font-size: 1.8rem; }
-        .feature-card { 
-            border: none; 
-            border-radius: 25px; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-            background: white;
+            padding: 120px 0; 
+            border-radius: 0 0 50px 50px;
+            position: relative;
             overflow: hidden;
         }
-        .feature-card:hover { transform: translateY(-12px); box-shadow: 0 20px 40px rgba(255, 77, 109, 0.1); }
-        .feature-icon { 
-            width: 70px; 
-            height: 70px; 
-            background: var(--soft-pink); 
-            border-radius: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            margin: 0 auto 20px;
-            color: var(--primary-pink);
-            font-size: 1.8rem;
-        }
-        .btn-primary { 
-            background-color: var(--primary-pink); 
-            border: none; 
-            padding: 15px 40px; 
-            border-radius: 30px; 
-            font-weight: 600;
-            box-shadow: 0 8px 20px rgba(255, 77, 109, 0.3);
-            transition: all 0.3s;
-        }
-        .btn-primary:hover { 
-            background-color: var(--dark-pink); 
-            transform: scale(1.05);
-            box-shadow: 0 12px 25px rgba(255, 77, 109, 0.4);
-        }
-        .btn-outline-light {
-            border: 2px solid white;
-            padding: 13px 35px;
-            border-radius: 30px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .section-title { color: var(--dark-pink); font-weight: 800; position: relative; margin-bottom: 50px; }
-        .section-title::after {
+        .hero::before {
             content: '';
-            display: block;
-            width: 60px;
-            height: 4px;
-            background: var(--primary-pink);
-            margin: 15px auto 0;
-            border-radius: 2px;
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('https://www.transparenttextures.com/patterns/cubes.png');
+            opacity: 0.1;
         }
-        .footer { background: white; padding: 40px 0; margin-top: 100px; border-top: 1px solid #ffe5ec; }
+        .navbar-brand { font-weight: 800; color: var(--primary-teal) !important; font-size: 1.8rem; }
+        .section-title { font-weight: 800; color: var(--text-dark); margin-bottom: 3rem; }
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-teal);
+            margin-bottom: 1.5rem;
+        }
+        .btn-telegram {
+            background: #0088cc;
+            color: white;
+            border-radius: 50px;
+            padding: 12px 30px;
+            border: none;
+            transition: var(--transition);
+        }
+        .btn-telegram:hover {
+            background: #0077b5;
+            color: white;
+            transform: translateY(-2px);
+        }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="/">Sugam Garbh</a>
+            <a class="navbar-brand" href="/"><i class="fas fa-baby-carriage me-2"></i>Sugam Garbh</a>
         </div>
     </nav>
 
-    <header class="hero text-center">
+    <header class="hero text-center animate-fade-in">
         <div class="container">
-            <h1 class="display-3 fw-bold mb-3">माँ बनने का सफर, अब और भी आसान</h1>
-            <p class="lead mb-5 opacity-90 fs-4">आपका व्यक्तिगत एआई साथी जो गर्भावस्था के हर कदम पर आपके साथ है।</p>
-            <div class="d-flex flex-wrap justify-content-center gap-3">
-                <a href="/chat" class="btn btn-primary btn-lg"><i class="fas fa-comments me-2"></i>अभी चैट करें</a>
-                <a href="https://t.me/SugamGarbhBot" target="_blank" class="btn btn-outline-light btn-lg"><i class="fab fa-telegram me-2"></i>टेलीग्राम बॉट</a>
+            <h1 class="display-3 fw-bold mb-4">सुरक्षित मातृत्व, सुखद अनुभव</h1>
+            <p class="lead mb-5 fs-4 fw-light">आपका भरोसेमंद एआई साथी जो गर्भावस्था के हर मोड़ पर आपका साथ देगा।</p>
+            <div class="d-flex flex-wrap justify-content-center gap-4">
+                <a href="/chat" class="btn btn-primary btn-lg px-5 py-3"><i class="fas fa-comment-dots me-2"></i>अभी बात करें</a>
+                <a href="https://t.me/SugamGarbhBot" target="_blank" class="btn btn-telegram btn-lg px-5 py-3"><i class="fab fa-telegram-plane me-2"></i>टेलीग्राम से जुड़ें</a>
             </div>
         </div>
     </header>
 
     <main class="container my-5 py-5">
-        <h2 class="text-center section-title">हमारी विशेषताएं</h2>
-        <div class="row g-4 justify-content-center">
+        <div class="row text-center mb-5">
+            <div class="col">
+                <h2 class="section-title">हम आपकी कैसे मदद करते हैं?</h2>
+            </div>
+        </div>
+        <div class="row g-5">
             <div class="col-md-4">
-                <div class="card h-100 feature-card p-5 text-center">
-                    <div class="feature-icon"><i class="fas fa-calendar-week"></i></div>
-                    <h4 class="fw-bold mb-3">साप्ताहिक अपडेट</h4>
-                    <p class="text-muted">आपके बच्चे के विकास की हर हफ्ते की जानकारी हिंदी और अंग्रेजी में।</p>
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon"><i class="fas fa-calendar-check"></i></div>
+                    <h4 class="fw-bold">साप्ताहिक मार्गदर्शन</h4>
+                    <p class="text-muted">हर हफ्ते आपके और आपके शिशु के विकास की सटीक जानकारी प्राप्त करें।</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100 feature-card p-5 text-center">
-                    <div class="feature-icon"><i class="fas fa-heartbeat"></i></div>
-                    <h4 class="fw-bold mb-3">स्वास्थ्य जांच</h4>
-                    <p class="text-muted">समय-समय पर स्वास्थ्य संबंधी रिमाइंडर और महत्वपूर्ण सलाह।</p>
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon"><i class="fas fa-user-md"></i></div>
+                    <h4 class="fw-bold">स्वास्थ्य परामर्श</h4>
+                    <p class="text-muted">पोषण, व्यायाम और सामान्य समस्याओं के लिए तुरंत एआई सलाह।</p>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="card h-100 feature-card p-5 text-center">
-                    <div class="feature-icon"><i class="fas fa-robot"></i></div>
-                    <h4 class="fw-bold mb-3">एआई असिस्टेंट</h4>
-                    <p class="text-muted">गर्भावस्था से जुड़ा कोई भी सवाल पूछें, हमारी एआई आपको सही राह दिखाएगी।</p>
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon"><i class="fas fa-language"></i></div>
+                    <h4 class="fw-bold">दोभाषी सहायता</h4>
+                    <p class="text-muted">अपनी सुविधा के अनुसार हिंदी या अंग्रेजी में बातचीत करें।</p>
                 </div>
             </div>
         </div>
