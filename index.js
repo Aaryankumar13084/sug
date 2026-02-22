@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const TelegramBot = require('node-telegram-bot-api');
 const mongoose = require('mongoose');
@@ -9,7 +10,16 @@ const BotService = require('./services/botService');
 const PregnancyService = require('./services/pregnancyService');
 
 const app = express();
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Set up EJS or simple HTML
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 // Get bot token from environment
 const BOT_TOKEN = '8166845761:AAH0Ik831wdflah3Zum5CQ6sM0gocKvgMZI';
@@ -54,25 +64,38 @@ cron.schedule('0 10 * * 1', async () => {
     timezone: "Asia/Kolkata"
 });
 
-// Root endpoint
+// Root endpoint - Landing Page
 app.get('/', (req, res) => {
-    res.json({
-        name: 'Sugam Garbh Telegram Bot',
-        description: 'A pregnancy tracking bot that provides weekly updates, health checks, and support in Hindi and English',
-        status: 'Active',
+    res.render('index', {
+        name: 'Sugam Garbh',
+        description: 'A pregnancy tracking platform that provides weekly updates, health checks, and support in Hindi and English',
         features: [
             'Weekly pregnancy updates',
             'Health check reminders', 
             'Keyword-based responses',
             'Bilingual support (Hindi/English)',
             'Automated scheduling'
-        ],
-        endpoints: {
-            health: '/health',
-            root: '/'
-        },
-        timestamp: new Date().toISOString()
+        ]
     });
+});
+
+// Chat interface endpoint
+app.get('/chat', (req, res) => {
+    res.render('chat');
+});
+
+// Web Chat API endpoint
+app.post('/api/chat', async (req, res) => {
+    const { message, language } = req.body;
+    try {
+        // Simplified response logic for web users
+        // In a real app, this would use the same service as the bot
+        const response = await botService.handleWebMessage(message, language || 'en');
+        res.json({ response });
+    } catch (error) {
+        console.error('Web Chat Error:', error);
+        res.status(500).json({ error: 'Failed to process message' });
+    }
 });
 
 // Health check endpoint

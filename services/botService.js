@@ -13,6 +13,21 @@ class BotService {
         this.userStates = new Map(); // Track user conversation states
     }
 
+    async handleWebMessage(message, language) {
+        try {
+            // Simple keyword check first
+            const keywordResponse = await this.keywordService.getResponse(message, language);
+            if (keywordResponse) return keywordResponse;
+
+            // Otherwise use Gemini
+            const aiResponse = await this.geminiService.generateResponse(message, language);
+            return aiResponse;
+        } catch (error) {
+            console.error('Web Message Error:', error);
+            return language === 'hi' ? 'क्षमा करें, मैं अभी जवाब नहीं दे सकता।' : 'Sorry, I cannot respond right now.';
+        }
+    }
+
     initializeHandlers() {
         // Handle /start command
         this.bot.onText(/\/start/, this.handleStart.bind(this));
