@@ -2,15 +2,19 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class GeminiService {
     constructor() {
-        this.apiKey = 'AIzaSyBB91bxqTwfGqUFzu5g1HOlaI7NW2Cj6oM';
-        if (!this.apiKey) {
-            console.warn('GEMINI_API_KEY not found in environment variables');
-            this.genAI = null;
-            return;
+        this.apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+        this.baseURL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+        
+        if (!this.apiKey || !this.baseURL) {
+            console.warn('Gemini AI integrations not fully configured. Using fallback if possible.');
         }
         
         this.genAI = new GoogleGenerativeAI(this.apiKey);
-        this.model = this.genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        // Using the recommended model from the integration
+        this.model = this.genAI.getGenerativeModel(
+            { model: "gemini-2.5-flash" },
+            { baseURL: this.baseURL }
+        );
     }
 
     async generateResponse(prompt, language = 'hindi') {
