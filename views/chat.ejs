@@ -180,7 +180,7 @@
             text-align: center;
             margin-bottom: 8px;
         }
-        .welcome-card .welcome-icon {
+        .welcome-icon {
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
@@ -323,22 +323,14 @@
 
     <script>
         const PUBLIC_VAPID_KEY = 'BHd6lpGShh7m5bAOB_ZmIs8cfPgkaqsxwEWaGWzYJIpKmzxa4yrNwrbw9GiGfodLmssca4Uh_YGiabgetChu2oQ';
+        const sessionId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
-        async function registerPush() {
-            if ('serviceWorker' in navigator) {
-                const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-                const subscription = await register.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
-                });
-
-                await fetch('/api/subscribe', {
-                    method: 'POST',
-                    body: JSON.stringify({ subscription, sessionId }),
-                    headers: { 'content-type': 'application/json' }
-                });
-            }
-        }
+        const chatForm = document.getElementById('chatForm');
+        const userInput = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const languageSelect = document.getElementById('languageSelect');
+        const typingIndicator = document.getElementById('typing');
+        const welcomeCard = document.getElementById('welcomeCard');
 
         function urlBase64ToUint8Array(base64String) {
             const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -351,8 +343,27 @@
             return outputArray;
         }
 
-        const chatForm = document.getElementById('chatForm');
-        // ... rest of scripts ...
+        async function registerPush() {
+            if ('serviceWorker' in navigator) {
+                try {
+                    const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                    const subscription = await register.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+                    });
+
+                    await fetch('/api/subscribe', {
+                        method: 'POST',
+                        body: JSON.stringify({ subscription, sessionId }),
+                        headers: { 'content-type': 'application/json' }
+                    });
+                } catch (err) {
+                    console.error('Push registration failed:', err);
+                }
+            }
+        }
+
+        (function() {
             const themeToggle = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('themeIcon');
             const html = document.documentElement;
@@ -372,22 +383,12 @@
             });
         })();
 
-        const chatForm = document.getElementById('chatForm');
-        const userInput = document.getElementById('userInput');
-        const chatBox = document.getElementById('chatBox');
-        const languageSelect = document.getElementById('languageSelect');
-        const typingIndicator = document.getElementById('typing');
-        const welcomeCard = document.getElementById('welcomeCard');
-
-        const sessionId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-
         function askQuick(text) {
             userInput.value = text;
             chatForm.dispatchEvent(new Event('submit'));
         }
 
         function addMessage(text, isUser = false) {
-            // Hide welcome card on first message
             if (welcomeCard) welcomeCard.style.display = 'none';
 
             const div = document.createElement('div');
@@ -426,7 +427,6 @@
                 const data = await response.json();
                 typingIndicator.style.display = 'none';
                 
-                // If registration complete, try to subscribe to push
                 if (data.response && (data.response.includes('Registration complete') || data.response.includes('पंजीकरण पूरा हुआ'))) {
                     registerPush();
                 }
@@ -444,13 +444,11 @@
             }
         };
 
-        // Language switch
         languageSelect.onchange = () => {
             const isHindi = languageSelect.value === 'hi';
             userInput.placeholder = isHindi ? 'अपना सवाल पूछें...' : 'Ask your question...';
             document.getElementById('typingText').textContent = isHindi ? 'सहायक टाइप कर रही है' : 'Assistant is typing';
 
-            // Update welcome card
             document.getElementById('welcomeTitle').textContent = isHindi
                 ? 'सुगम गर्भ में आपका स्वागत है!'
                 : 'Welcome to Sugam Garbh!';
@@ -458,7 +456,6 @@
                 ? 'गर्भावस्था से जुड़ा कोई भी सवाल पूछें। घरेलू नुस्खे, आहार, व्यायाम — सब कुछ।'
                 : 'Ask any pregnancy-related question. Home remedies, diet, exercise — everything.';
 
-            // Update quick actions
             const qa = document.getElementById('quickActions');
             if (isHindi) {
                 qa.innerHTML = `
