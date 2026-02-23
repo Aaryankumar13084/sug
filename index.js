@@ -96,6 +96,26 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+// Push Subscription endpoint
+app.post('/api/subscribe', async (req, res) => {
+    const { subscription, sessionId } = req.body;
+    try {
+        // Find user by session if they just registered or use a way to link
+        // For simplicity, we'll find the last created web user without a subscription
+        const user = await User.findOne({ registrationSource: 'web', webPushSubscription: null }).sort({ createdAt: -1 });
+        if (user) {
+            user.webPushSubscription = subscription;
+            await user.save();
+            res.status(201).json({});
+        } else {
+            res.status(404).json({ error: 'User not found' });
+        }
+    } catch (error) {
+        console.error('Subscription Error:', error);
+        res.status(500).json({ error: 'Failed to subscribe' });
+    }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 

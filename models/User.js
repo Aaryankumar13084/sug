@@ -4,8 +4,17 @@ const { encrypt, decrypt } = require('../utils/encryption');
 const userSchema = new mongoose.Schema({
     telegramId: {
         type: String,
-        required: true,
-        unique: true
+        unique: true,
+        sparse: true
+    },
+    webPushSubscription: {
+        type: Object,
+        default: null
+    },
+    registrationSource: {
+        type: String,
+        enum: ['telegram', 'web'],
+        default: 'telegram'
     },
     firstName: {
         type: String,

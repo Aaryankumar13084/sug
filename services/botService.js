@@ -19,6 +19,29 @@ class BotService {
             // Map short language codes to full names used by services
             const langFull = language === 'en' ? 'english' : 'hindi';
 
+            // Check if user is in registration flow
+            const userState = this.userStates.get(sessionId);
+            if (userState) {
+                if (userState.state === 'awaiting_consent') {
+                    if (message.toLowerCase().includes('yes') || message.includes('हाँ') || message.includes('agree')) {
+                        return await this.requestWebDueDate(sessionId, langFull);
+                    } else {
+                        return langFull === 'english' ? 'Registration cancelled. Type "start" to try again.' : 'पंजीकरण रद्द कर दिया गया। फिर से शुरू करने के लिए "शुरू" लिखें।';
+                    }
+                }
+                if (userState.state === 'awaiting_due_date') {
+                    return await this.handleWebDueDateInput(sessionId, message, langFull);
+                }
+            }
+
+            // Start registration if keywords detected
+            if (['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू'].includes(message.toLowerCase())) {
+                this.userStates.set(sessionId, { state: 'awaiting_consent', language: langFull });
+                return langFull === 'english' 
+                    ? 'Welcome to Sugam Garbh! I will provide weekly pregnancy updates. Do you agree to our terms? (educational purposes only, not medical advice)' 
+                    : 'सुगम गर्भ में आपका स्वागत है! मैं साप्ताहिक गर्भावस्था अपडेट प्रदान करूंगी। क्या आप हमारी शर्तों से सहमत हैं? (केवल शैक्षिक उद्देश्यों के लिए, चिकित्सा सलाह नहीं)';
+            }
+
             // Simple keyword check first
             const keywordResponse = await this.keywordService.getResponse(message, langFull);
             if (keywordResponse) return keywordResponse;
@@ -41,6 +64,34 @@ class BotService {
             console.error('Web Message Error:', error);
             return language === 'hi' ? 'क्षमा करें, मैं अभी जवाब नहीं दे सकता।' : 'Sorry, I cannot respond right now.';
         }
+    }
+
+    async requestWebDueDate(sessionId, language) {
+        this.userStates.set(sessionId, { state: 'awaiting_due_date', language });
+        return language === 'english' 
+            ? 'Please provide your conception date (DD/MM/YYYY):' 
+            : 'कृपया अपनी गर्भ धारण की तिथि बताएं (DD/MM/YYYY):';
+    }
+
+    async handleWebDueDateInput(sessionId, text, language) {
+        const dueDate = parseDate(text);
+        if (!dueDate || !isValidDate(dueDate) || !isValidConceptionDate(dueDate)) {
+            return language === 'english' ? 'Invalid date. Use DD/MM/YYYY:' : 'अमान्य तिथि। DD/MM/YYYY का उपयोग करें:';
+        }
+
+        const user = new User({
+            firstName: 'Web User',
+            dueDate: dueDate,
+            consentGiven: true,
+            language: language,
+            registrationSource: 'web'
+        });
+        await user.save();
+        this.userStates.delete(sessionId);
+
+        return language === 'english' 
+            ? 'Registration complete! You will now receive weekly updates.' 
+            : 'पंजीकरण पूरा हुआ! अब आपको साप्ताहिक अपडेट मिलेंगे।';
     }
 
     initializeHandlers() {

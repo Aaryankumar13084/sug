@@ -322,8 +322,37 @@
     </div>
 
     <script>
-        // Dark mode toggle with localStorage persistence
-        (function() {
+        const PUBLIC_VAPID_KEY = 'BHd6lpGShh7m5bAOB_ZmIs8cfPgkaqsxwEWaGWzYJIpKmzxa4yrNwrbw9GiGfodLmssca4Uh_YGiabgetChu2oQ';
+
+        async function registerPush() {
+            if ('serviceWorker' in navigator) {
+                const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                const subscription = await register.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+                });
+
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify({ subscription, sessionId }),
+                    headers: { 'content-type': 'application/json' }
+                });
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        const chatForm = document.getElementById('chatForm');
+        // ... rest of scripts ...
             const themeToggle = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('themeIcon');
             const html = document.documentElement;
@@ -396,6 +425,12 @@
                 });
                 const data = await response.json();
                 typingIndicator.style.display = 'none';
+                
+                // If registration complete, try to subscribe to push
+                if (data.response && (data.response.includes('Registration complete') || data.response.includes('पंजीकरण पूरा हुआ'))) {
+                    registerPush();
+                }
+
                 const errorMsg = languageSelect.value === 'hi'
                     ? "क्षमा करें, मैं अभी जवाब नहीं दे पा रही हूँ।"
                     : "Sorry, I cannot respond right now.";

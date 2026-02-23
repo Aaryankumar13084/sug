@@ -204,66 +204,40 @@ ${content.generalAdvice.map(point => `• ${point}`).join('\n')}
     async sendWeeklyHealthCheck(bot, user) {
         try {
             let healthQuestions, options;
-
-            if (user.language === 'english') {
-                healthQuestions = [
-                    "🩺 <b>Weekly Health Check</b>",
-                    "",
-                    "Please answer the following questions:",
-                    "",
-                    "1️⃣ How are you feeling?",
-                    "2️⃣ Are you experiencing any new problems?", 
-                    "3️⃣ Are you eating and drinking properly?",
-                    "4️⃣ Are you sleeping well?",
-                    "5️⃣ Can you feel baby's movements? (after 20 weeks)",
-                    "",
-                    "You can say 'All good' or describe any concerns."
-                ].join('\n');
-
-                options = {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                { text: 'All good ✅', callback_data: 'health_good' },
-                                { text: 'Some issues 🤕', callback_data: 'health_issues' }
-                            ]
-                        ]
-                    },
-                    parse_mode: 'HTML'
-                };
+            const isEnglish = user.language === 'english';
+            
+            if (isEnglish) {
+                healthQuestions = "🩺 Weekly Health Check\n\nHow are you feeling? Any new problems? Baby movements?";
             } else {
-                healthQuestions = [
-                    "🩺 <b>साप्ताहिक स्वास्थ्य जांच</b>",
-                    "",
-                    "कृपया निम्न प्रश्नों का उत्तर दें:",
-                    "",
-                    "1️⃣ आप कैसी महसूस कर रही हैं?",
-                    "2️⃣ क्या आपको कोई नई परेशानी हो रही है?", 
-                    "3️⃣ भोजन और पानी का सेवन सही से हो रहा है?",
-                    "4️⃣ नींद अच्छी आ रही है?",
-                    "5️⃣ शिशु की हरकत महसूस हो रही है? (20 सप्ताह के बाद)",
-                    "",
-                    "आप 'सब ठीक है' या अपनी परेशानी बता सकती हैं।"
-                ].join('\n');
-
-                options = {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [
-                                { text: 'सब ठीक है ✅', callback_data: 'health_good' },
-                                { text: 'कुछ परेशानी है 🤕', callback_data: 'health_issues' }
-                            ]
-                        ]
-                    },
-                    parse_mode: 'HTML'
-                };
+                healthQuestions = "🩺 साप्ताहिक स्वास्थ्य जांच\n\nआप कैसी महसूस कर रही हैं? क्या कोई नई परेशानी है? शिशु की हरकत महसूस हो रही है?";
             }
 
-            await bot.sendMessage(user.telegramId, healthQuestions, options);
+            if (user.registrationSource === 'web' && user.webPushSubscription) {
+                const notificationService = require('./notificationService');
+                await notificationService.sendNotification(user.webPushSubscription, {
+                    title: isEnglish ? 'Health Check' : 'स्वास्थ्य जांच',
+                    body: healthQuestions,
+                    url: '/chat'
+                });
+            } else if (user.telegramId) {
+                // ... telegram logic ...
+                options = {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: isEnglish ? 'All good ✅' : 'सब ठीक है ✅', callback_data: 'health_good' },
+                                { text: isEnglish ? 'Some issues 🤕' : 'कुछ परेशानी है 🤕', callback_data: 'health_issues' }
+                            ]
+                        ]
+                    },
+                    parse_mode: 'HTML'
+                };
+                await bot.sendMessage(user.telegramId, healthQuestions, options);
+            }
 
-            console.log(`Sent weekly health check to user ${user.telegramId}`);
+            console.log(`Sent weekly health check to user ${user._id}`);
         } catch (error) {
-            console.error(`Error sending health check to user ${user.telegramId}:`, error);
+            console.error(`Error sending health check:`, error);
         }
     }
 }

@@ -42,3 +42,9 @@ externalPort = 8000
 [agent]
 expertMode = true
 integrations = ["javascript_gemini_ai_integrations:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+PRIVATE_VAPID_KEY = "eqS6M5h4I0DZUlNblz0NLyXoj4uTGQIxL57kZiLxqII"
+PUBLIC_VAPID_KEY = "BHd6lpGShh7m5bAOB_ZmIs8cfPgkaqsxwEWaGWzYJIpKmzxa4yrNwrbw9GiGfodLmssca4Uh_YGiabgetChu2oQ"
