@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="hi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/form.css">
     <style>
         body {
             height: 100vh;
@@ -42,9 +44,17 @@
             position: relative;
             animation: msgIn 0.35s ease;
         }
+
         @keyframes msgIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .user-message {
@@ -75,6 +85,7 @@
             align-items: center;
             gap: 5px;
         }
+
         .bot-label i {
             font-size: 0.6rem;
         }
@@ -85,6 +96,7 @@
             padding: 16px 20px;
             border-top: 1px solid var(--border-light);
         }
+
         .input-wrapper {
             max-width: 700px;
             margin: 0 auto;
@@ -93,6 +105,7 @@
             align-items: center;
             gap: 10px;
         }
+
         .form-control {
             border-radius: 25px;
             padding: 12px 20px;
@@ -102,11 +115,13 @@
             font-size: 0.92rem;
             flex: 1;
         }
+
         .form-control:focus {
             background: white;
             border-color: var(--primary-pink);
             box-shadow: 0 0 0 4px rgba(232, 114, 138, 0.1);
         }
+
         .btn-send {
             background: var(--primary-pink);
             color: white;
@@ -121,6 +136,7 @@
             transition: var(--transition);
             box-shadow: 0 3px 10px rgba(232, 114, 138, 0.3);
         }
+
         .btn-send:hover {
             background: var(--primary-dark);
             transform: scale(1.05);
@@ -136,10 +152,12 @@
             display: none;
             width: 100%;
         }
+
         .typing-indicator .dots {
             display: inline-flex;
             gap: 3px;
         }
+
         .typing-indicator .dots span {
             width: 5px;
             height: 5px;
@@ -148,11 +166,28 @@
             animation: dotPulse 1.4s infinite;
             opacity: 0.4;
         }
-        .typing-indicator .dots span:nth-child(2) { animation-delay: 0.2s; }
-        .typing-indicator .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        .typing-indicator .dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator .dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
         @keyframes dotPulse {
-            0%, 80%, 100% { opacity: 0.4; transform: scale(1); }
-            40% { opacity: 1; transform: scale(1.2); }
+
+            0%,
+            80%,
+            100% {
+                opacity: 0.4;
+                transform: scale(1);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
         }
 
         /* Language Select */
@@ -167,6 +202,7 @@
             outline: none;
             font-family: 'Poppins', sans-serif;
         }
+
         .lang-select:focus {
             border-color: var(--primary-pink);
         }
@@ -180,16 +216,19 @@
             text-align: center;
             margin-bottom: 8px;
         }
+
         .welcome-icon {
             font-size: 2.5rem;
             margin-bottom: 10px;
         }
+
         .welcome-card h3 {
             font-size: 1.1rem;
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 6px;
         }
+
         .welcome-card p {
             font-size: 0.85rem;
             color: var(--text-medium);
@@ -204,6 +243,7 @@
             justify-content: center;
             margin-top: 12px;
         }
+
         .quick-btn {
             background: white;
             border: 1px solid var(--border-light);
@@ -215,6 +255,7 @@
             transition: var(--transition);
             font-family: 'Poppins', sans-serif;
         }
+
         .quick-btn:hover {
             background: var(--soft-pink-bg);
             border-color: var(--primary-pink);
@@ -226,55 +267,252 @@
             background: #1e1a1b;
             border-top-color: var(--border-light);
         }
+
         [data-theme="dark"] .form-control {
             background: #2a2325;
             border-color: rgba(240, 141, 160, 0.15);
             color: var(--text-dark);
         }
+
         [data-theme="dark"] .form-control:focus {
             background: #1e1a1b;
             border-color: var(--primary-pink);
             color: var(--text-dark);
         }
+
         [data-theme="dark"] .form-control::placeholder {
             color: var(--text-light);
         }
+
         [data-theme="dark"] .bot-message {
             background: #1e1a1b;
             border-color: var(--border-light);
             color: var(--text-dark);
         }
+
         [data-theme="dark"] .user-message {
             box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
         }
+
         [data-theme="dark"] .welcome-card {
             background: linear-gradient(135deg, #1e1a1b 0%, #2a2325 100%);
             border-color: var(--border-light);
         }
+
         [data-theme="dark"] .quick-btn {
             background: #2a2325;
             border-color: rgba(240, 141, 160, 0.15);
             color: var(--text-medium);
         }
+
         [data-theme="dark"] .quick-btn:hover {
             background: #352e30;
             border-color: var(--primary-pink);
             color: var(--primary-pink);
         }
+
         [data-theme="dark"] .lang-select {
             background: #2a2325;
             border-color: rgba(240, 141, 160, 0.15);
             color: var(--text-medium);
         }
     </style>
+    <style>
+        /* Layout */
+        .app-container {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            padding-top: 60px;
+            /* Space for navbar */
+        }
+
+        /* Sidebar Styles */
+        .chat-sidebar {
+            width: 260px;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            background: var(--soft-pink-bg);
+            color: var(--primary-pink);
+            border: 1px dashed var(--primary-pink);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--primary-pink);
+            color: white;
+        }
+
+        .session-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .session-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-radius: 0;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-dark);
+            text-decoration: none;
+            position: relative;
+        }
+
+        .session-item:hover {
+            background: var(--soft-pink-bg);
+        }
+
+        .session-item.active {
+            background: var(--soft-pink-bg);
+            border-left: 3px solid var(--primary-pink);
+            font-weight: 600;
+        }
+
+        .session-title {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        .session-delete {
+            color: var(--text-light);
+            opacity: 0;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 5px;
+        }
+
+        .session-item:hover .session-delete {
+            opacity: 1;
+        }
+
+        .session-delete:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-width: 0;
+        }
+
+        /* Mobile Adjustments */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--text-dark);
+            margin-right: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .chat-sidebar {
+                position: fixed;
+                top: 60px;
+                bottom: 0;
+                left: 0;
+                transform: translateX(-100%);
+            }
+
+            .chat-sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        [data-theme="dark"] .chat-sidebar {
+            background: #1e1a1b;
+            border-color: var(--border-light);
+        }
+
+        [data-theme="dark"] .new-chat-btn {
+            background: #2a2325;
+            color: var(--primary-pink);
+        }
+
+        [data-theme="dark"] .session-item {
+            color: var(--text-dark);
+        }
+
+        [data-theme="dark"] .session-item:hover,
+        [data-theme="dark"] .session-item.active {
+            background: #2a2325;
+        }
+
+        [data-theme="dark"] .mobile-menu-btn {
+            color: var(--text-dark);
+        }
+    </style>
 </head>
+
 <body>
     <!-- Navbar -->
     <nav class="navbar fixed-top">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/" style="font-size: 1.2rem;">
-                <i class="fas fa-heart me-2" style="color: var(--primary-pink);"></i>Sugam Garbh
-            </a>
+        <div class="container-fluid px-3 px-md-4">
+            <div class="d-flex align-items-center">
+                <button class="mobile-menu-btn" id="menuBtn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <a class="navbar-brand fw-bold m-0" href="/" style="font-size: 1.2rem;">
+                    <i class="fas fa-heart me-2" style="color: var(--primary-pink);"></i>Sugam Garbh
+                </a>
+            </div>
             <div class="ms-auto d-flex align-items-center gap-2">
                 <button class="theme-toggle" id="themeToggle" title="Dark Mode">
                     <i class="fas fa-moon" id="themeIcon"></i>
@@ -287,43 +525,71 @@
         </div>
     </nav>
 
-    <!-- Chat Area -->
-    <div class="chat-container" id="chatBox">
-        <!-- Welcome Card -->
-        <div id="welcomeCard" class="welcome-card">
-            <div class="welcome-icon">🤱</div>
-            <h3 id="welcomeTitle">सुगम गर्भ में आपका स्वागत है!</h3>
-            <p id="welcomeText">गर्भावस्था से जुड़ा कोई भी सवाल पूछें। घरेलू नुस्खे, आहार, व्यायाम — सब कुछ।</p>
-            <div class="quick-actions" id="quickActions">
-                <button class="quick-btn" onclick="askQuick('कमर दर्द का उपाय')">कमर दर्द</button>
-                <button class="quick-btn" onclick="askQuick('उल्टी का घरेलू उपाय')">उल्टी</button>
-                <button class="quick-btn" onclick="askQuick('गर्भावस्था में आहार')">आहार</button>
-                <button class="quick-btn" onclick="askQuick('नींद नहीं आती')">नींद</button>
-            </div>
-        </div>
-    </div>
+    <div class="app-container">
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- Typing Indicator -->
-    <div id="typing" class="typing-indicator">
-        <span id="typingText">सहायक टाइप कर रही है</span>
-        <span class="dots"><span></span><span></span><span></span></span>
-    </div>
-
-    <!-- Input Area -->
-    <div class="input-area">
-        <div class="input-wrapper">
-            <form id="chatForm" style="display: flex; gap: 10px; width: 100%; align-items: center;">
-                <input type="text" id="userInput" class="form-control" placeholder="अपना सवाल पूछें..." autocomplete="off" required>
-                <button type="submit" class="btn-send">
-                    <i class="fas fa-paper-plane" style="font-size: 0.9rem;"></i>
+        <!-- Sidebar -->
+        <aside class="chat-sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn" id="newChatBtn">
+                    <i class="fas fa-plus"></i>
+                    <span id="newChatText">नई चैट (New Chat)</span>
                 </button>
-            </form>
-        </div>
+            </div>
+            <div class="session-list" id="sessionList">
+                <!-- Sessions will be loaded here -->
+            </div>
+        </aside>
+
+        <!-- Main Content (Chat Area) -->
+        <main class="main-content">
+            <div class="chat-container" id="chatBox" style="padding-top: 20px;">
+                <!-- Welcome Card -->
+                <div id="welcomeCard" class="welcome-card">
+                    <div class="welcome-icon">🤱</div>
+                    <h3 id="welcomeTitle">सुगम गर्भ में आपका स्वागत है!</h3>
+                    <p id="welcomeText">गर्भावस्था से जुड़ा कोई भी सवाल पूछें। घरेलू नुस्खे, आहार, व्यायाम — सब कुछ।</p>
+                    <div class="quick-actions" id="quickActions">
+                        <button class="quick-btn" onclick="askQuick('पंजीकरण')">पंजीकरण करें</button>
+                        <button class="quick-btn" onclick="askQuick('कमर दर्द का उपाय')">कमर दर्द</button>
+                        <button class="quick-btn" onclick="askQuick('उल्टी का घरेलू उपाय')">उल्टी</button>
+                        <button class="quick-btn" onclick="askQuick('गर्भावस्था में आहार')">आहार</button>
+                        <button class="quick-btn" onclick="askQuick('नींद नहीं आती')">नींद</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator -->
+            <div id="typing" class="typing-indicator" style="position: absolute; bottom: 80px;">
+                <span id="typingText">सहायक टाइप कर रही है</span>
+                <span class="dots"><span></span><span></span><span></span></span>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <form id="chatForm" style="display: flex; gap: 10px; width: 100%; align-items: center;">
+                        <input type="text" id="userInput" class="form-control" placeholder="अपना सवाल पूछें..."
+                            autocomplete="off" required>
+                        <button type="submit" class="btn-send">
+                            <i class="fas fa-paper-plane" style="font-size: 0.9rem;"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
         const PUBLIC_VAPID_KEY = 'BHd6lpGShh7m5bAOB_ZmIs8cfPgkaqsxwEWaGWzYJIpKmzxa4yrNwrbw9GiGfodLmssca4Uh_YGiabgetChu2oQ';
-        const sessionId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+        // Persistent Session ID Logic
+        let sessionId = localStorage.getItem('sugam-session-id');
+        if (!sessionId) {
+            sessionId = 'web_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('sugam-session-id', sessionId);
+        }
 
         const chatForm = document.getElementById('chatForm');
         const userInput = document.getElementById('userInput');
@@ -363,7 +629,7 @@
             }
         }
 
-        (function() {
+        (function () {
             const themeToggle = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('themeIcon');
             const html = document.documentElement;
@@ -405,6 +671,141 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        async function submitRegistrationForm(event) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            const submitBtn = form.querySelector('button');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = languageSelect.value === 'hi' ? 'प्रक्रिया जारी है...' : 'Processing...';
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...data, sessionId })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    form.parentElement.innerHTML = `<div class="text-center py-2"><i class="fas fa-check-circle text-success me-2"></i>${result.message}</div>`;
+                    registerPush();
+                } else {
+                    alert(result.error || 'Registration failed');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (err) {
+                console.error('Registration Error:', err);
+                alert('Connection error. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        let currentChatSessionId = null;
+
+        // Mobile Sidebar Toggle
+        const menuBtn = document.getElementById('menuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            sidebarOverlay.classList.toggle('show');
+        }
+
+        menuBtn.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', toggleSidebar);
+
+        // Session Management
+        const newChatBtn = document.getElementById('newChatBtn');
+        const sessionList = document.getElementById('sessionList');
+
+        async function loadSessions() {
+            try {
+                const res = await fetch(`/api/sessions/${sessionId}`);
+                const data = await res.json();
+                renderSessionList(data.sessions || []);
+            } catch (err) {
+                console.error("Failed to load sessions:", err);
+            }
+        }
+
+        function renderSessionList(sessions) {
+            sessionList.innerHTML = '';
+            sessions.forEach(session => {
+                const item = document.createElement('div');
+                item.className = `session-item ${session._id === currentChatSessionId ? 'active' : ''}`;
+                item.dataset.id = session._id;
+
+                item.innerHTML = `
+                    <i class="far fa-comment-alt"></i>
+                    <span class="session-title">${session.title}</span>
+                    <button class="session-delete" onclick="deleteSession(event, '${session._id}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                `;
+
+                item.addEventListener('click', () => loadChatHistory(session._id));
+                sessionList.appendChild(item);
+            });
+        }
+
+        async function deleteSession(event, id) {
+            event.stopPropagation();
+            if (!confirm(languageSelect.value === 'hi' ? "क्या आप इस चैट को डिलीट करना चाहते हैं?" : "Delete this chat?")) return;
+
+            try {
+                await fetch(`/api/sessions/${sessionId}/${id}`, { method: 'DELETE' });
+                if (currentChatSessionId === id) {
+                    startNewChat();
+                } else {
+                    loadSessions();
+                }
+            } catch (err) {
+                console.error("Failed to delete session:", err);
+            }
+        }
+
+        function startNewChat() {
+            currentChatSessionId = null;
+            chatBox.innerHTML = '';
+            // Re-add welcome card
+            chatBox.appendChild(welcomeCard);
+            welcomeCard.style.display = 'block';
+            loadSessions(); // Re-render to clear 'active' class
+            if (window.innerWidth <= 768) toggleSidebar();
+        }
+
+        newChatBtn.addEventListener('click', startNewChat);
+
+        async function loadChatHistory(id) {
+            currentChatSessionId = id;
+            if (window.innerWidth <= 768) toggleSidebar();
+
+            chatBox.innerHTML = '';
+            try {
+                const res = await fetch(`/api/sessions/${sessionId}/${id}`);
+                const data = await res.json();
+                if (data.session && data.session.messages) {
+                    data.session.messages.forEach(msg => {
+                        addMessage(msg.text, msg.role === 'user');
+                    });
+                }
+                loadSessions(); // Re-render to set 'active' class
+            } catch (err) {
+                console.error("Failed to load chat history:", err);
+            }
+        }
+
+        // Initialize on load
+        loadSessions();
+
         chatForm.onsubmit = async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
@@ -414,6 +815,25 @@
             userInput.value = '';
             typingIndicator.style.display = 'flex';
 
+            // Create new session on first message if none exists
+            if (!currentChatSessionId) {
+                try {
+                    const title = message.split(' ').slice(0, 4).join(' ') + (message.split(' ').length > 4 ? '...' : '');
+                    const res = await fetch('/api/sessions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ sessionId, title })
+                    });
+                    const data = await res.json();
+                    if (data.session) {
+                        currentChatSessionId = data.session._id;
+                        loadSessions(); // Update sidebar with new session
+                    }
+                } catch (err) {
+                    console.error("Failed to create session in DB:", err);
+                }
+            }
+
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
@@ -421,12 +841,13 @@
                     body: JSON.stringify({
                         message,
                         language: languageSelect.value,
-                        sessionId
+                        sessionId,
+                        chatSessionId: currentChatSessionId
                     })
                 });
                 const data = await response.json();
                 typingIndicator.style.display = 'none';
-                
+
                 if (data.response && (data.response.includes('Registration complete') || data.response.includes('पंजीकरण पूरा हुआ'))) {
                     registerPush();
                 }
@@ -459,6 +880,7 @@
             const qa = document.getElementById('quickActions');
             if (isHindi) {
                 qa.innerHTML = `
+                    <button class="quick-btn" onclick="askQuick('पंजीकरण')">पंजीकरण करें</button>
                     <button class="quick-btn" onclick="askQuick('कमर दर्द का उपाय')">कमर दर्द</button>
                     <button class="quick-btn" onclick="askQuick('उल्टी का घरेलू उपाय')">उल्टी</button>
                     <button class="quick-btn" onclick="askQuick('गर्भावस्था में आहार')">आहार</button>
@@ -466,6 +888,7 @@
                 `;
             } else {
                 qa.innerHTML = `
+                    <button class="quick-btn" onclick="askQuick('register')">Register Now</button>
                     <button class="quick-btn" onclick="askQuick('Back pain remedies')">Back Pain</button>
                     <button class="quick-btn" onclick="askQuick('Home remedy for nausea')">Nausea</button>
                     <button class="quick-btn" onclick="askQuick('Diet during pregnancy')">Diet</button>
@@ -475,4 +898,5 @@
         };
     </script>
 </body>
+
 </html>

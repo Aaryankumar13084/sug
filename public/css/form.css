@@ -1,0 +1,88 @@
+/* Registration Form Styles */
+.reg-form-container {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 10px 0;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    max-width: 100%;
+}
+
+.reg-form-container h4 {
+    color: var(--primary-pink);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.reg-form-group {
+    margin-bottom: 15px;
+}
+
+.reg-form-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-medium);
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.reg-form-group input {
+    width: 100%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid var(--border-light);
+    background: var(--soft-pink-bg);
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    transition: var(--transition);
+}
+
+.reg-form-group input:focus {
+    outline: none;
+    border-color: var(--primary-pink);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(232, 114, 138, 0.1);
+}
+
+.reg-submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary-pink);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 4px 10px rgba(232, 114, 138, 0.2);
+    margin-top: 5px;
+}
+
+.reg-submit-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(232, 114, 138, 0.3);
+}
+
+.reg-submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Dark mode overrides */
+[data-theme="dark"] .reg-form-container {
+    background: #2a2325;
+}
+
+[data-theme="dark"] .reg-form-group input {
+    background: #1e1a1b;
+    border-color: rgba(240, 141, 160, 0.1);
+    color: white;
+}
+
+[data-theme="dark"] .reg-form-group label {
+    color: var(--text-light);
+}

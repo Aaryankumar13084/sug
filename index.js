@@ -8,6 +8,9 @@ require('dotenv').config();
 const connectDB = require('./config/database');
 const BotService = require('./services/botService');
 const PregnancyService = require('./services/pregnancyService');
+const User = require('./models/User');
+const ChatSession = require('./models/ChatSession');
+const { parseDate, isValidDate, isValidConceptionDate } = require('./utils/dateUtils');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -71,7 +74,7 @@ app.get('/', (req, res) => {
         description: 'A pregnancy tracking platform that provides weekly updates, health checks, and support in Hindi and English',
         features: [
             'Weekly pregnancy updates',
-            'Health check reminders', 
+            'Health check reminders',
             'Keyword-based responses',
             'Bilingual support (Hindi/English)',
             'Automated scheduling'
@@ -86,9 +89,9 @@ app.get('/chat', (req, res) => {
 
 // Web Chat API endpoint
 app.post('/api/chat', async (req, res) => {
-    const { message, language, sessionId } = req.body;
+    const { message, language, sessionId, chatSessionId } = req.body;
     try {
-        const response = await botService.handleWebMessage(message, language || 'hi', sessionId);
+        const response = await botService.handleWebMessage(message, language || 'hi', sessionId, chatSessionId);
         res.json({ response });
     } catch (error) {
         console.error('Web Chat Error:', error);
@@ -96,13 +99,72 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+// Get all chat sessions for a web user
+app.get('/api/sessions/:sessionId', async (req, res) => {
+    try {
+        const sessions = await ChatSession.find({ userSessionId: req.params.sessionId })
+            .select('title createdAt updatedAt')
+            .sort({ updatedAt: -1 });
+        res.json({ sessions });
+    } catch (error) {
+        console.error('Error fetching sessions:', error);
+        res.status(500).json({ error: 'Failed to fetch sessions' });
+    }
+});
+
+// Create a new chat session
+app.post('/api/sessions', async (req, res) => {
+    try {
+        const { sessionId, title } = req.body;
+        const newSession = new ChatSession({
+            userSessionId: sessionId,
+            title: title || 'New Chat'
+        });
+        await newSession.save();
+        res.status(201).json({ session: newSession });
+    } catch (error) {
+        console.error('Error creating session:', error);
+        res.status(500).json({ error: 'Failed to create session' });
+    }
+});
+
+// Get a specific chat session's messages
+app.get('/api/sessions/:sessionId/:chatSessionId', async (req, res) => {
+    try {
+        const session = await ChatSession.findOne({
+            _id: req.params.chatSessionId,
+            userSessionId: req.params.sessionId
+        });
+        if (!session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        res.json({ session });
+    } catch (error) {
+        console.error('Error fetching session details:', error);
+        res.status(500).json({ error: 'Failed to fetch session details' });
+    }
+});
+
+// Delete a specific chat session
+app.delete('/api/sessions/:sessionId/:chatSessionId', async (req, res) => {
+    try {
+        await ChatSession.findOneAndDelete({
+            _id: req.params.chatSessionId,
+            userSessionId: req.params.sessionId
+        });
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error deleting session:', error);
+        res.status(500).json({ error: 'Failed to delete session' });
+    }
+});
+
 // Push Subscription endpoint
 app.post('/api/subscribe', async (req, res) => {
     const { subscription, sessionId } = req.body;
     try {
-        // Find user by session if they just registered or use a way to link
-        // For simplicity, we'll find the last created web user without a subscription
-        const user = await User.findOne({ registrationSource: 'web', webPushSubscription: null }).sort({ createdAt: -1 });
+        // Find user by session if they just registered
+        const user = await User.findOne({ sessionId: sessionId }).sort({ createdAt: -1 });
         if (user) {
             user.webPushSubscription = subscription;
             await user.save();
@@ -116,10 +178,44 @@ app.post('/api/subscribe', async (req, res) => {
     }
 });
 
+// Registration API endpoint
+app.post('/api/register', async (req, res) => {
+    const { firstName, conceptionDate, sessionId } = req.body;
+    try {
+        const dueDate = parseDate(conceptionDate);
+        if (!dueDate || !isValidDate(dueDate) || !isValidConceptionDate(dueDate)) {
+            return res.status(400).json({ error: 'Invalid date. Please use DD/MM/YYYY format and ensure it is within the last 10 months.' });
+        }
+
+        // Use sessionId to find and update or create new user
+        // This ensures a session only has one user profile
+        const user = await User.findOneAndUpdate(
+            { sessionId: sessionId },
+            {
+                firstName: firstName,
+                dueDate: dueDate,
+                registrationSource: 'web',
+                isActive: true,
+                consentGiven: true
+            },
+            { upsert: true, new: true, runValidators: true }
+        );
+
+        res.json({ message: 'Registration successful!', user });
+    } catch (error) {
+        console.error('Registration API Error:', error);
+        if (error.code === 11000) {
+            console.error('Duplicate Key Info:', JSON.stringify(error.keyValue));
+            return res.status(400).json({ error: 'Registration failed: Duplicate session or ID error.' });
+        }
+        res.status(500).json({ error: 'Failed to register' });
+    }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
+    res.json({
+        status: 'OK',
         message: 'Sugam Garbh Bot is running',
         timestamp: new Date().toISOString()
     });

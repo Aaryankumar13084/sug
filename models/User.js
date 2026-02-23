@@ -4,6 +4,10 @@ const { encrypt, decrypt } = require('../utils/encryption');
 const userSchema = new mongoose.Schema({
     telegramId: {
         type: String,
+        sparse: true
+    },
+    sessionId: {
+        type: String,
         unique: true,
         sparse: true
     },
@@ -82,7 +86,7 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt sensitive data before saving
-userSchema.pre('save', function(next) {
+userSchema.pre('save', function (next) {
     if (this.isModified('location') && this.location) {
         this.location = encrypt(this.location);
     }
@@ -93,11 +97,11 @@ userSchema.pre('save', function(next) {
 });
 
 // Decrypt sensitive data after finding
-userSchema.post(['find', 'findOne', 'findOneAndUpdate'], function(docs) {
+userSchema.post(['find', 'findOne', 'findOneAndUpdate'], function (docs) {
     if (!docs) return;
-    
+
     const documents = Array.isArray(docs) ? docs : [docs];
-    
+
     documents.forEach(doc => {
         if (doc.location) {
             try {

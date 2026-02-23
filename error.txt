@@ -1,0 +1,9 @@
+DEBUG ERROR: TypeError: encryptData is not a function
+    at c:\Users\codey\allcode\sug\models\ChatSession.js:53:35
+    at Proxy.forEach (<anonymous>)
+    at model.<anonymous> (c:\Users\codey\allcode\sug\models\ChatSession.js:50:23)
+    at callMiddlewareFunction (c:\Users\codey\allcode\sug\node_modules\kareem\index.js:628:27)
+    at model.next (c:\Users\codey\allcode\sug\node_modules\kareem\index.js:93:7)
+    at _next (c:\Users\codey\allcode\sug\node_modules\kareem\index.js:146:10)
+    at c:\Users\codey\allcode\sug\node_modules\kareem\index.js:653:30
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)

@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const ChatSession = require('../models/ChatSession');
 const PregnancyService = require('./pregnancyService');
 const KeywordService = require('./keywordService');
 const GeminiService = require('./geminiService');
@@ -14,7 +15,7 @@ class BotService {
         this.webSessions = new Map(); // Track web chat conversation history
     }
 
-    async handleWebMessage(message, language, sessionId) {
+    async handleWebMessage(message, language, sessionId, chatSessionId) {
         try {
             // Map short language codes to full names used by services
             const langFull = language === 'en' ? 'english' : 'hindi';
@@ -35,25 +36,85 @@ class BotService {
             }
 
             // Start registration if keywords detected
-            if (['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू'].includes(message.toLowerCase())) {
-                this.userStates.set(sessionId, { state: 'awaiting_consent', language: langFull });
-                return langFull === 'english' 
-                    ? 'Welcome to Sugam Garbh! I will provide weekly pregnancy updates. Do you agree to our terms? (educational purposes only, not medical advice)' 
-                    : 'सुगम गर्भ में आपका स्वागत है! मैं साप्ताहिक गर्भावस्था अपडेट प्रदान करूंगी। क्या आप हमारी शर्तों से सहमत हैं? (केवल शैक्षिक उद्देश्यों के लिए, चिकित्सा सलाह नहीं)';
+            const startKeywords = ['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू', 'register', 'पंजीकरण', 'registration', 'panjikaran', 'panjikarn', 'shuru'];
+            if (startKeywords.includes(message.toLowerCase())) {
+                // Check if user is already registered in this session
+                try {
+                    const existingUser = await User.findOne({ sessionId: sessionId });
+                    if (existingUser) {
+                        return langFull === 'english'
+                            ? `Welcome back, ${existingUser.firstName}! How can I assist you with your pregnancy today?`
+                            : `वापसी पर स्वागत है, ${existingUser.firstName}! आज मैं आपकी गर्भावस्था में कैसे सहायता कर सकती हूँ?`;
+                    }
+                } catch (e) {
+                    console.error('Error checking user session:', e);
+                }
+
+                const formHtml = `
+<div class="reg-form-container">
+    <h4>${langFull === 'english' ? 'Registration' : 'पंजीकरण'}</h4>
+    <form onsubmit="submitRegistrationForm(event)">
+        <div class="reg-form-group">
+            <label>${langFull === 'english' ? 'First Name' : 'पहला नाम'}</label>
+            <input type="text" name="firstName" required placeholder="${langFull === 'english' ? 'Your name' : 'आपका नाम'}">
+        </div>
+        <div class="reg-form-group">
+            <label>${langFull === 'english' ? 'Conception Date' : 'गर्भधारण की तिथि'}</label>
+            <input type="text" name="conceptionDate" required placeholder="DD/MM/YYYY">
+        </div>
+        <button type="submit" class="reg-submit-btn">${langFull === 'english' ? 'Register Now' : 'अभी पंजीकरण करें'}</button>
+    </form>
+</div>
+`;
+                return formHtml;
             }
 
             // Simple keyword check first
             const keywordResponse = await this.keywordService.getResponse(message, langFull);
             if (keywordResponse) return keywordResponse;
 
-            // Get conversation history for this session
-            const history = sessionId ? (this.webSessions.get(sessionId) || []) : [];
+            // Get conversation history from the specific ChatSession
+            let sessionDoc = null;
+            let history = [];
+
+            if (chatSessionId) {
+                try {
+                    sessionDoc = await ChatSession.findById(chatSessionId);
+                    if (sessionDoc) {
+                        // Extract just the question/answer format for the AI context
+                        for (let i = 0; i < sessionDoc.messages.length - 1; i += 2) {
+                            if (sessionDoc.messages[i].role === 'user' && sessionDoc.messages[i + 1] && sessionDoc.messages[i + 1].role === 'model') {
+                                history.push({
+                                    question: sessionDoc.messages[i].text,
+                                    answer: sessionDoc.messages[i + 1].text
+                                });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error fetching chat session history:', e);
+                }
+            } else {
+                // Fallback to in-memory session history if no DB ID provided
+                history = sessionId ? (this.webSessions.get(sessionId) || []) : [];
+            }
 
             // Generate AI response with conversation history
             const aiResponse = await this.geminiService.generateResponse(message, langFull, history);
 
-            // Save to session history (keep last 10 exchanges)
-            if (sessionId) {
+            // Save to DB session history
+            if (chatSessionId && sessionDoc) {
+                try {
+                    // Save user message
+                    sessionDoc.messages.push({ role: 'user', text: message });
+                    // Save model response
+                    sessionDoc.messages.push({ role: 'model', text: aiResponse });
+                    await sessionDoc.save();
+                } catch (dbError) {
+                    console.error('Error saving messages to ChatSession:', dbError);
+                }
+            } else if (sessionId) {
+                // Keep minimal in-memory history if no persistent session
                 history.push({ question: message, answer: aiResponse });
                 if (history.length > 10) history.shift();
                 this.webSessions.set(sessionId, history);
@@ -68,15 +129,17 @@ class BotService {
 
     async requestWebDueDate(sessionId, language) {
         this.userStates.set(sessionId, { state: 'awaiting_due_date', language });
-        return language === 'english' 
-            ? 'Please provide your conception date (DD/MM/YYYY):' 
+        return language === 'english'
+            ? 'Please provide your conception date (DD/MM/YYYY):'
             : 'कृपया अपनी गर्भ धारण की तिथि बताएं (DD/MM/YYYY):';
     }
 
     async handleWebDueDateInput(sessionId, text, language) {
         const dueDate = parseDate(text);
         if (!dueDate || !isValidDate(dueDate) || !isValidConceptionDate(dueDate)) {
-            return language === 'english' ? 'Invalid date. Use DD/MM/YYYY:' : 'अमान्य तिथि। DD/MM/YYYY का उपयोग करें:';
+            return language === 'english'
+                ? 'Invalid date. Please use DD/MM/YYYY format and ensure the date is within the last 10 months.'
+                : 'अमान्य तिथि। कृपया DD/MM/YYYY प्रारूप का उपयोग करें और सुनिश्चित करें कि तिथि पिछले 10 महीनों के भीतर है।';
         }
 
         const user = new User({
@@ -89,8 +152,8 @@ class BotService {
         await user.save();
         this.userStates.delete(sessionId);
 
-        return language === 'english' 
-            ? 'Registration complete! You will now receive weekly updates.' 
+        return language === 'english'
+            ? 'Registration complete! You will now receive weekly updates.'
             : 'पंजीकरण पूरा हुआ! अब आपको साप्ताहिक अपडेट मिलेंगे।';
     }
 
@@ -141,12 +204,12 @@ class BotService {
 
     async handleHelp(msg) {
         const chatId = msg.chat.id;
-        
+
         try {
             // Get user's language preference
             const user = await User.findOne({ telegramId: chatId.toString() });
             const language = user?.language || 'hindi';
-            
+
             let helpMessage;
             if (language === 'english') {
                 helpMessage = `🤖 <b>Sugam Garbh Bot Help</b>
@@ -215,9 +278,9 @@ Just type your question naturally - no commands needed!`;
 
 बस अपना प्रश्न सामान्य रूप से टाइप करें - किसी कमांड की आवश्यकता नहीं!`;
             }
-            
+
             await this.bot.sendMessage(chatId, helpMessage, { parse_mode: 'HTML' });
-            
+
         } catch (error) {
             console.error('Error in handleHelp:', error);
             await this.bot.sendMessage(chatId, 'Sorry, there was an error showing help. Please try again later. / Kshama karen, help dikhane mein truti hui. Kripaya baad mein punah prayas karen.');
@@ -227,15 +290,15 @@ Just type your question naturally - no commands needed!`;
     async handleAskCommand(msg, match) {
         const chatId = msg.chat.id;
         const userQuestion = match[1]; // Extract the text after /ask
-        
+
         try {
             // Get user's language preference
             const user = await User.findOne({ telegramId: chatId.toString() });
             const language = user ? user.language : 'hindi';
-            
+
             // Send typing indicator
             await this.bot.sendChatAction(chatId, 'typing');
-            
+
             // Add desi nuskhe and short-answer instructions
             const responseStyleNote = language === 'english'
                 ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
@@ -243,17 +306,17 @@ Just type your question naturally - no commands needed!`;
 
             // Generate response using Gemini API
             const response = await this.geminiService.generateResponse(userQuestion + responseStyleNote, language);
-            
+
             // Send the AI-generated response with clean formatting
-            const formattedResponse = language === 'english' 
+            const formattedResponse = language === 'english'
                 ? `🤖 AI Assistant:\n\n${response}`
                 : `🤖 AI सहायक:\n\n${response}`;
-            
+
             await this.bot.sendMessage(chatId, formattedResponse, { parse_mode: 'HTML' });
-            
+
         } catch (error) {
             console.error('Error in handleMeekCommand:', error);
-            const errorMessage = user && user.language === 'english' 
+            const errorMessage = user && user.language === 'english'
                 ? 'Sorry, I could not process your request. Please try again later.'
                 : 'क्षमा करें, मैं आपका अनुरोध संसाधित नहीं कर सका। कृपया बाद में पुनः प्रयास करें।';
             await this.bot.sendMessage(chatId, errorMessage);
@@ -403,15 +466,21 @@ Or type /help for more information.`;
             if (user && user.consentGiven) {
                 await this.handleAutomaticAIResponse(chatId, text, user);
             } else {
-                // Handle keyword-based queries for unregistered users
-                await this.handleKeywordQuery(chatId, text);
+                // For unregistered users, check if they sent a start keyword
+                const startKeywords = ['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू', 'register', 'पंजीकरण', 'registration', 'panjikaran', 'panjikarn', 'shuru'];
+                if (startKeywords.includes(text.toLowerCase().trim())) {
+                    await this.handleStart(msg);
+                } else {
+                    // Handle keyword-based queries for unregistered users
+                    await this.handleKeywordQuery(chatId, text);
+                }
             }
 
         } catch (error) {
             console.error('Error in handleMessage:', error);
             const userState = this.userStates.get(chatId);
             const language = userState?.language || 'hindi';
-            
+
             if (language === 'english') {
                 await this.bot.sendMessage(chatId, 'Sorry, there was an error. Please try again later.');
             } else {
@@ -453,7 +522,7 @@ Or type /help for more information.`;
             } else if (data === 'need_doctor') {
                 const user = await User.findOne({ telegramId: chatId.toString() });
                 const language = user?.language || 'hindi';
-                
+
                 let doctorMessage;
                 if (language === 'english') {
                     doctorMessage = `🏥 <b>Contact your doctor immediately!</b>
@@ -544,7 +613,7 @@ If you don't remember the exact date, please provide your last period date.`;
             if (language === 'english') {
                 await this.bot.sendMessage(chatId, 'Please provide date in correct format (DD/MM/YYYY)\nExample: 15/08/2024');
             } else {
-                await this.bot.sendMessage(chatId, 'Kripaya sahi format mein tithi den (DD/MM/YYYY)\nUdaharan: 15/08/2024');
+                await this.bot.sendMessage(chatId, 'कृपया सही प्रारूप में तिथि दें (DD/MM/YYYY)\nउदाहरण: 15/08/2024');
             }
             return;
         }
@@ -552,9 +621,9 @@ If you don't remember the exact date, please provide your last period date.`;
         // Check if conception date is reasonable (should be in the past, within last 10 months)
         if (!isValidConceptionDate(dueDate)) {
             if (language === 'english') {
-                await this.bot.sendMessage(chatId, 'Please provide a valid conception date (in the past and within last 10 months).\nExample: 15/08/2024');
+                await this.bot.sendMessage(chatId, 'Please provide a valid conception date (within the last 10 months).\nExample: 15/08/2024');
             } else {
-                await this.bot.sendMessage(chatId, 'Kripaya ek vaidh garbh dharan tithi den (aaj se pehle aur pichhle 10 mahine ke beech). \nUdaharan: 15/08/2024');
+                await this.bot.sendMessage(chatId, 'कृपया एक मान्य गर्भ धारण तिथि दें (पिछले 10 महीनों के भीतर)।\nउदाहरण: 15/08/2024');
             }
             return;
         }
@@ -686,30 +755,30 @@ Stay healthy! 🤱`;
         try {
             // Send typing indicator
             await this.bot.sendChatAction(chatId, 'typing');
-            
+
             // Get the last 3 questions from conversation history for context
             const recentHistory = user.conversationHistory.slice(-3);
-            
+
             // Build context from previous conversations
             let contextPrompt = '';
             if (recentHistory.length > 0) {
-                contextPrompt = user.language === 'english' 
+                contextPrompt = user.language === 'english'
                     ? '\n\nPrevious conversation context:\n'
                     : '\n\nपिछली बातचीत का संदर्भ:\n';
-                
+
                 recentHistory.forEach((entry, index) => {
                     contextPrompt += user.language === 'english'
                         ? `Q${index + 1}: ${entry.question}\nA${index + 1}: ${entry.answer}\n\n`
                         : `प्र${index + 1}: ${entry.question}\nउ${index + 1}: ${entry.answer}\n\n`;
                 });
             }
-            
+
             // Add user's pregnancy week context
             const currentWeek = calculatePregnancyWeek(user.dueDate);
             const pregnancyContext = user.language === 'english'
                 ? `\n\nCurrent pregnancy context: The user is in week ${currentWeek} of pregnancy.`
                 : `\n\nवर्तमान गर्भावस्था संदर्भ: उपयोगकर्ता गर्भावस्था के ${currentWeek}वें सप्ताह में है।`;
-            
+
             // Add desi nuskhe and short-answer instructions
             const responseStyleContext = user.language === 'english'
                 ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
@@ -717,34 +786,34 @@ Stay healthy! 🤱`;
 
             // Create the full prompt with context
             const fullQuestion = text + contextPrompt + pregnancyContext + responseStyleContext;
-            
+
             // Generate response using Gemini API with context
             const response = await this.geminiService.generateResponse(fullQuestion, user.language);
-            
+
             // Store the conversation in history (keep only last 3)
             const conversationEntry = {
                 question: text,
                 answer: response,
                 timestamp: new Date()
             };
-            
+
             // Add to conversation history and limit to last 3 entries
             user.conversationHistory.push(conversationEntry);
             if (user.conversationHistory.length > 3) {
                 user.conversationHistory = user.conversationHistory.slice(-3);
             }
-            
+
             await user.save();
-            
+
             // Send the AI-generated response with feedback buttons
-            const formattedResponse = user.language === 'english' 
+            const formattedResponse = user.language === 'english'
                 ? `🤖 AI Assistant:\n\n${response}`
                 : `🤖 AI सहायक:\n\n${response}`;
-            
+
             const options = {
                 reply_markup: {
                     inline_keyboard: [
-                        user.language === 'english' 
+                        user.language === 'english'
                             ? [
                                 { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
                                 { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
@@ -757,12 +826,12 @@ Stay healthy! 🤱`;
                 },
                 parse_mode: 'HTML'
             };
-            
+
             await this.bot.sendMessage(chatId, formattedResponse, options);
-            
+
         } catch (error) {
             console.error('Error in handleAutomaticAIResponse:', error);
-            
+
             // Fallback to keyword-based response if AI fails
             await this.handleKeywordQuery(chatId, text);
         }
@@ -772,7 +841,7 @@ Stay healthy! 🤱`;
         // Get user's language preference
         const user = await User.findOne({ telegramId: chatId.toString() });
         const language = user?.language || 'hindi';
-        
+
         // Always use user's preferred language, regardless of input text language
         const response = this.keywordService.getResponse(text, language);
 
@@ -850,23 +919,23 @@ Please type one of these words.`;
 
             await User.updateOne(
                 { telegramId: chatId.toString() },
-                { 
-                    $push: { 
-                        feedback: { 
+                {
+                    $push: {
+                        feedback: {
                             helpful: helpful,
                             timestamp: new Date()
-                        } 
-                    } 
+                        }
+                    }
                 }
             );
 
             let thankYouMessage;
             if (language === 'english') {
-                thankYouMessage = helpful ? 
+                thankYouMessage = helpful ?
                     'Thank you! Your feedback is valuable to us. 🙏' :
                     'Thank you! We will try to improve. 🙏';
             } else {
-                thankYouMessage = helpful ? 
+                thankYouMessage = helpful ?
                     'धन्यवाद! आपकी प्रतिक्रिया हमारे लिए महत्वपूर्ण है। 🙏' :
                     'धन्यवाद! हम बेहतर बनने की कोशिश करेंगे। 🙏';
             }
@@ -876,11 +945,11 @@ Please type one of these words.`;
             console.error('Error saving feedback:', error);
             const user = await User.findOne({ telegramId: chatId.toString() });
             const language = user?.language || 'hindi';
-            
-            const errorMessage = language === 'english' ? 
+
+            const errorMessage = language === 'english' ?
                 'Sorry, there was an error. Please try again later.' :
                 'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।';
-                
+
             await this.bot.sendMessage(chatId, errorMessage);
         }
     }
@@ -917,7 +986,7 @@ If you have any problems, always consult your doctor! 🩺`;
                 await this.bot.sendMessage(chatId, message);
             } else if (data === 'health_issues') {
                 this.userStates.set(chatId, 'awaiting_health_details');
-                
+
                 let message;
                 if (language === 'english') {
                     message = `🤕 What problems are you having? Please describe in detail:
@@ -951,13 +1020,13 @@ I will try to help you, but remember - if there are any serious symptoms, immedi
             // Save health status
             await User.updateOne(
                 { telegramId: chatId.toString() },
-                { 
-                    $push: { 
-                        healthChecks: { 
+                {
+                    $push: {
+                        healthChecks: {
                             status: data === 'health_good' ? 'good' : 'issues',
                             timestamp: new Date()
-                        } 
-                    } 
+                        }
+                    }
                 }
             );
 
@@ -977,36 +1046,36 @@ I will try to help you, but remember - if there are any serious symptoms, immedi
             // Save health details
             await User.updateOne(
                 { telegramId: chatId.toString() },
-                { 
-                    $push: { 
-                        healthChecks: { 
+                {
+                    $push: {
+                        healthChecks: {
                             status: 'issues',
                             details: text,
                             timestamp: new Date()
-                        } 
-                    } 
+                        }
+                    }
                 }
             );
 
             // Provide basic advice based on common symptoms
             let response;
             const lowText = text.toLowerCase();
-            
+
             if (language === 'english') {
                 response = `🩺 Your concern: "${text}"\n\n`;
-                
+
                 if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
                     response += `💊 For headache:\n• Drink plenty of water\n• Take rest\n• Apply cold compress\n• Reduce stress\n\n`;
                 }
-                
+
                 if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
                     response += `🤢 For vomiting:\n• Eat small amounts\n• Drink ginger tea\n• Have lemon water\n• Eat dry biscuits\n\n`;
                 }
-                
+
                 if (lowText.includes('kabz') || lowText.includes('constipation')) {
                     response += `🚽 For constipation:\n• Eat fiber-rich food\n• Drink more water\n• Light exercise\n• Eat papaya, banana\n\n`;
                 }
-                
+
                 if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
                     response += `😴 For weakness:\n• Get good sleep\n• Eat iron-rich food\n• Take vitamin supplements\n• Rest more\n\n`;
                 }
@@ -1014,19 +1083,19 @@ I will try to help you, but remember - if there are any serious symptoms, immedi
                 response += `⚠️ <b>Important:</b> If symptoms worsen or you have high fever, bleeding, severe pain, contact doctor IMMEDIATELY!\n\n📱 Emergency: 102 (Ambulance)`;
             } else {
                 response = `🩺 आपकी परेशानी: "${text}"\n\n`;
-                
+
                 if (lowText.includes('sir') || lowText.includes('headache') || lowText.includes('dard')) {
                     response += `💊 सिर दर्द के लिए:\n• भरपूर पानी पिएं\n• आराम करें\n• ठंडा सेकाई लगाएं\n• तनाव कम रखें\n\n`;
                 }
-                
+
                 if (lowText.includes('ulti') || lowText.includes('vomit') || lowText.includes('nausea')) {
                     response += `🤢 उल्टी के लिए:\n• थोड़ा-थोड़ा खाएं\n• अदरक की चाय पिएं\n• नींबू पानी लें\n• सूखे बिस्कुट खाएं\n\n`;
                 }
-                
+
                 if (lowText.includes('kabz') || lowText.includes('constipation')) {
                     response += `🚽 कब्ज के लिए:\n• फाइबर वाला खाना लें\n• ज्यादा पानी पिएं\n• हल्का व्यायाम करें\n• पपीता, केला खाएं\n\n`;
                 }
-                
+
                 if (lowText.includes('kamjor') || lowText.includes('weak') || lowText.includes('thak')) {
                     response += `😴 कमजोरी के लिए:\n• अच्छी नींद लें\n• आयरन युक्त भोजन खाएं\n• विटामिन सप्लीमेंट लें\n• ज्यादा आराम करें\n\n`;
                 }
@@ -1067,11 +1136,11 @@ I will try to help you, but remember - if there are any serious symptoms, immedi
             console.error('Error handling health details:', error);
             const user = await User.findOne({ telegramId: chatId.toString() });
             const language = user?.language || 'hindi';
-            
-            const errorMessage = language === 'english' ? 
+
+            const errorMessage = language === 'english' ?
                 'Sorry, there was an error. Please try again later.' :
                 'क्षमा करें, कुछ त्रुटि हुई है। कृपया बाद में पुनः प्रयास करें।';
-                
+
             await this.bot.sendMessage(chatId, errorMessage);
         }
     }

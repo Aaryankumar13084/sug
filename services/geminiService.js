@@ -2,9 +2,9 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class GeminiService {
     constructor() {
-        this.apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || 'AIzaSyA0JSWX1inXJZmR9cPqZV8wGwE62WhVuug';
+        this.apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || 'AIzaSyBjZ3W9JJpUr7pEEl-IWG-oMmpdkTLs3T0';
         this.baseURL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta';
-        
+
         if (!this.apiKey || !this.baseURL) {
             console.warn('Gemini AI integrations not fully configured.');
         }
@@ -110,7 +110,7 @@ Provide helpful pregnancy guidance with proper spacing.`;
                 parts: [{ text: prompt }]
             });
 
-            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+            const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -126,13 +126,13 @@ Provide helpful pregnancy guidance with proper spacing.`;
             }
 
             const data = await response.json();
-            
+
             if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts[0]) {
-              throw new Error('Invalid response format from AI API');
+                throw new Error('Invalid response format from AI API');
             }
 
             let responseText = data.candidates[0].content.parts[0].text;
-            
+
             // Clean up formatting - improve structure and readability with proper line spacing
             responseText = responseText
                 .replace(/\*\*\*/g, '') // Remove triple asterisks
@@ -148,11 +148,11 @@ Provide helpful pregnancy guidance with proper spacing.`;
                 .replace(/^\s+|\s+$/gm, '') // Remove leading/trailing spaces from each line
                 .replace(/([•])\s*([^•\n]+)\n(?=[•])/g, '$1 $2\n') // Fix bullet point spacing
                 .trim();
-            
+
             return responseText;
         } catch (error) {
             console.error('Error generating Gemini response:', error);
-            return language === 'english' 
+            return language === 'english'
                 ? 'Sorry, I could not generate a response at this moment. Please try again later.'
                 : 'क्षमा करें, मैं इस समय उत्तर नहीं दे सकता। कृपया बाद में पुनः प्रयास करें।';
         }
