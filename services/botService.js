@@ -11,16 +11,31 @@ class BotService {
         this.keywordService = new KeywordService();
         this.geminiService = new GeminiService();
         this.userStates = new Map(); // Track user conversation states
+        this.webSessions = new Map(); // Track web chat conversation history
     }
 
-    async handleWebMessage(message, language) {
+    async handleWebMessage(message, language, sessionId) {
         try {
+            // Map short language codes to full names used by services
+            const langFull = language === 'en' ? 'english' : 'hindi';
+
             // Simple keyword check first
-            const keywordResponse = await this.keywordService.getResponse(message, language);
+            const keywordResponse = await this.keywordService.getResponse(message, langFull);
             if (keywordResponse) return keywordResponse;
 
-            // Otherwise use Gemini
-            const aiResponse = await this.geminiService.generateResponse(message, language);
+            // Get conversation history for this session
+            const history = sessionId ? (this.webSessions.get(sessionId) || []) : [];
+
+            // Generate AI response with conversation history
+            const aiResponse = await this.geminiService.generateResponse(message, langFull, history);
+
+            // Save to session history (keep last 10 exchanges)
+            if (sessionId) {
+                history.push({ question: message, answer: aiResponse });
+                if (history.length > 10) history.shift();
+                this.webSessions.set(sessionId, history);
+            }
+
             return aiResponse;
         } catch (error) {
             console.error('Web Message Error:', error);
@@ -170,8 +185,13 @@ Just type your question naturally - no commands needed!`;
             // Send typing indicator
             await this.bot.sendChatAction(chatId, 'typing');
             
+            // Add desi nuskhe and short-answer instructions
+            const responseStyleNote = language === 'english'
+                ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
+                : '\n\nमहत्वपूर्ण: पहले देसी नुस्खे और घरेलू उपाय बताएं। दवाई तभी बताएं जब मैं खुद पूछूं। छोटा जवाब दें (3-5 बुलेट पॉइंट)। विस्तार से तभी बताएं जब मैं कहूं।';
+
             // Generate response using Gemini API
-            const response = await this.geminiService.generateResponse(userQuestion, language);
+            const response = await this.geminiService.generateResponse(userQuestion + responseStyleNote, language);
             
             // Send the AI-generated response with clean formatting
             const formattedResponse = language === 'english' 
@@ -639,8 +659,13 @@ Stay healthy! 🤱`;
                 ? `\n\nCurrent pregnancy context: The user is in week ${currentWeek} of pregnancy.`
                 : `\n\nवर्तमान गर्भावस्था संदर्भ: उपयोगकर्ता गर्भावस्था के ${currentWeek}वें सप्ताह में है।`;
             
+            // Add desi nuskhe and short-answer instructions
+            const responseStyleContext = user.language === 'english'
+                ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
+                : '\n\nमहत्वपूर्ण: पहले देसी नुस्खे और घरेलू उपाय बताएं। दवाई तभी बताएं जब मैं खुद पूछूं। छोटा जवाब दें (3-5 बुलेट पॉइंट)। विस्तार से तभी बताएं जब मैं कहूं।';
+
             // Create the full prompt with context
-            const fullQuestion = text + contextPrompt + pregnancyContext;
+            const fullQuestion = text + contextPrompt + pregnancyContext + responseStyleContext;
             
             // Generate response using Gemini API with context
             const response = await this.geminiService.generateResponse(fullQuestion, user.language);

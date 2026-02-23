@@ -9,71 +9,65 @@ class KeywordService {
 
     getResponse(text, language = 'hindi') {
         const cleanText = text.toLowerCase().trim();
-        
-        // Check keywords in both languages but return response in preferred language
-        const allKeywords = { ...this.hindiKeywords, ...this.englishKeywords };
-        
-        // Find matching keyword from either language
-        let matchedKeyword = null;
-        for (const keyword of Object.keys(allKeywords)) {
+
+        // Always search in the user's preferred language keywords FIRST
+        const responseKeywords = language === 'english' ? this.englishKeywords : this.hindiKeywords;
+        const otherKeywords = language === 'english' ? this.hindiKeywords : this.englishKeywords;
+
+        // First: check if any keyword from the preferred language matches
+        for (const keyword of Object.keys(responseKeywords)) {
             if (cleanText.includes(keyword)) {
-                matchedKeyword = keyword;
-                break;
+                return responseKeywords[keyword];
             }
         }
-        
-        if (matchedKeyword) {
-            // Return response in user's preferred language
-            const responseKeywords = language === 'english' ? this.englishKeywords : this.hindiKeywords;
-            
-            // If keyword exists in preferred language, use it
-            if (responseKeywords[matchedKeyword]) {
-                return responseKeywords[matchedKeyword];
-            }
-            
-            // If not, find equivalent keyword in preferred language
-            const keywordMappings = {
-                // Hindi to English mappings
-                'कब्ज': 'constipation',
-                'टीकाकरण': 'vaccination', 
-                'आहार': 'diet',
-                'चिंता': 'anxiety',
-                'व्यायाम': 'exercise',
-                'सिरदर्द': 'headache',
-                'उल्टी': 'vomiting',
-                'रक्तचाप': 'bp',
-                'मधुमेह': 'diabetes',
-                'नींद': 'sleep',
-                // English to Hindi mappings
-                'constipation': 'कब्ज',
-                'vaccination': 'टीकाकरण',
-                'diet': 'आहार', 
-                'anxiety': 'चिंता',
-                'exercise': 'व्यायाम',
-                'headache': 'सिरदर्द',
-                'vomiting': 'उल्टी',
-                'bp': 'रक्तचाप',
-                'diabetes': 'मधुमेह',
-                'sleep': 'नींद',
-                // Additional mappings
-                'kabz': language === 'english' ? 'constipation' : 'कब्ज',
-                'tikakaran': language === 'english' ? 'vaccination' : 'टीकाकरण',
-                'aahar': language === 'english' ? 'diet' : 'आहार',
-                'chinta': language === 'english' ? 'anxiety' : 'चिंता',
-                'vyayam': language === 'english' ? 'exercise' : 'व्यायाम',
-                'sirdard': language === 'english' ? 'headache' : 'सिरदर्द',
-                'ulti': language === 'english' ? 'vomiting' : 'उल्टी',
-                'raktchap': language === 'english' ? 'bp' : 'रक्तचाप',
-                'sugar': language === 'english' ? 'diabetes' : 'मधुमेह',
-                'neend': language === 'english' ? 'sleep' : 'नींद'
-            };
-            
-            const equivalentKeyword = keywordMappings[matchedKeyword];
-            if (equivalentKeyword && responseKeywords[equivalentKeyword]) {
-                return responseKeywords[equivalentKeyword];
+
+        // Second: check if any keyword from the other language matches, then map to preferred language response
+        const keywordMappings = {
+            // Hindi to English mappings
+            'कब्ज': 'constipation',
+            'टीकाकरण': 'vaccination',
+            'आहार': 'diet',
+            'चिंता': 'anxiety',
+            'व्यायाम': 'exercise',
+            'सिरदर्द': 'headache',
+            'उल्टी': 'vomiting',
+            'रक्तचाप': 'bp',
+            'मधुमेह': 'diabetes',
+            'नींद': 'sleep',
+            // English to Hindi mappings
+            'constipation': 'कब्ज',
+            'vaccination': 'टीकाकरण',
+            'diet': 'आहार',
+            'anxiety': 'चिंता',
+            'exercise': 'व्यायाम',
+            'headache': 'सिरदर्द',
+            'vomiting': 'उल्टी',
+            'bp': 'रक्तचाप',
+            'diabetes': 'मधुमेह',
+            'sleep': 'नींद',
+            // Romanized Hindi mappings
+            'kabz': language === 'english' ? 'constipation' : 'कब्ज',
+            'tikakaran': language === 'english' ? 'vaccination' : 'टीकाकरण',
+            'aahar': language === 'english' ? 'diet' : 'आहार',
+            'chinta': language === 'english' ? 'anxiety' : 'चिंता',
+            'vyayam': language === 'english' ? 'exercise' : 'व्यायाम',
+            'sirdard': language === 'english' ? 'headache' : 'सिरदर्द',
+            'ulti': language === 'english' ? 'vomiting' : 'उल्टी',
+            'raktchap': language === 'english' ? 'bp' : 'रक्तचाप',
+            'sugar': language === 'english' ? 'diabetes' : 'मधुमेह',
+            'neend': language === 'english' ? 'sleep' : 'नींद'
+        };
+
+        for (const keyword of Object.keys(otherKeywords)) {
+            if (cleanText.includes(keyword)) {
+                // Map to equivalent keyword in preferred language
+                const equivalentKeyword = keywordMappings[keyword];
+                if (equivalentKeyword && responseKeywords[equivalentKeyword]) {
+                    return responseKeywords[equivalentKeyword];
+                }
             }
         }
-        
+
         return null;
     }
 }

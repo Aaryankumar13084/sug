@@ -86,11 +86,9 @@ app.get('/chat', (req, res) => {
 
 // Web Chat API endpoint
 app.post('/api/chat', async (req, res) => {
-    const { message, language } = req.body;
+    const { message, language, sessionId } = req.body;
     try {
-        // Simplified response logic for web users
-        // In a real app, this would use the same service as the bot
-        const response = await botService.handleWebMessage(message, language || 'en');
+        const response = await botService.handleWebMessage(message, language || 'hi', sessionId);
         res.json({ response });
     } catch (error) {
         console.error('Web Chat Error:', error);

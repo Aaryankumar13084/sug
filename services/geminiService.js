@@ -2,17 +2,17 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 class GeminiService {
     constructor() {
-        this.apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
-        this.baseURL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+        this.apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY || 'AIzaSyA0JSWX1inXJZmR9cPqZV8wGwE62WhVuug';
+        this.baseURL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta';
         
         if (!this.apiKey || !this.baseURL) {
             console.warn('Gemini AI integrations not fully configured.');
         }
     }
 
-    async generateResponse(prompt, language = 'hindi') {
+    async generateResponse(prompt, language = 'hindi', conversationHistory = []) {
         if (!this.apiKey || !this.baseURL) {
-            return language === 'english' 
+            return language === 'english'
                 ? 'Gemini AI service is not available. Please configure GEMINI_API_KEY.'
                 : 'जेमिनी AI सेवा उपलब्ध नहीं है। कृपया GEMINI_API_KEY कॉन्फ़िगर करें।';
         }
@@ -20,14 +20,20 @@ class GeminiService {
         try {
             // Replit AI Integrations specific fetch to bypass SDK endpoint issues
             const url = `${this.baseURL}/models/gemini-2.5-flash:generateContent`;
-            
+
             let languageContext;
             if (language === 'english') {
                 languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English.
 
+RESPONSE PRIORITY RULES:
+- Always prioritize home remedies (desi nuskhe) and natural solutions first
+- Only suggest medicines/medications when the user explicitly asks for medicine
+- Keep your initial response SHORT (3-5 bullet points max). Only give a detailed/long response when the user asks for more detail (e.g., "tell me more", "explain in detail")
+- Always add a disclaimer: "Consult your doctor before trying any remedy."
+
 FORMATTING REQUIREMENTS:
 - Write in clear paragraphs with proper line breaks
-- Add a blank line between each paragraph 
+- Add a blank line between each paragraph
 - Start each main section with ONE emoji (🩺, 💡, ⚠️, 🍎, or 💊) followed by text
 - Use bullet points (•) for lists, each on a new line
 - Keep paragraphs 2-3 sentences maximum
@@ -35,19 +41,22 @@ FORMATTING REQUIREMENTS:
 - Use natural paragraph breaks for readability
 
 Example format:
-🩺 Medical Information
-This is a paragraph about medical advice. It should be clear and concise.
+🍎 Home Remedies
+• First home remedy here
+• Second home remedy here
+• Third home remedy here
 
-💡 Tips and Suggestions  
-Here are some helpful tips. Each point should be easy to read.
-
-• First tip here
-• Second tip here
-• Third tip here
+⚠️ Consult your doctor before trying any remedy.
 
 Provide helpful pregnancy guidance with proper spacing.`;
             } else {
                 languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें।
+
+जवाब देने के नियम:
+- हमेशा पहले देसी नुस्खे और घरेलू उपाय बताएं
+- दवाई तभी बताएं जब उपयोगकर्ता खुद दवाई के बारे में पूछे
+- पहले छोटा जवाब दें (3-5 बुलेट पॉइंट)। विस्तार से तभी बताएं जब उपयोगकर्ता कहे (जैसे "विस्तार से बताओ", "detail me batao")
+- हमेशा अंत में लिखें: "कोई भी उपाय आजमाने से पहले अपने डॉक्टर से सलाह लें।"
 
 फॉर्मेटिंग आवश्यकताएं:
 - उचित लाइन ब्रेक के साथ स्पष्ट पैराग्राफ में लिखें
@@ -59,18 +68,47 @@ Provide helpful pregnancy guidance with proper spacing.`;
 - पढ़ने की सुविधा के लिए प्राकृतिक पैराग्राफ ब्रेक का उपयोग करें
 
 उदाहरण फॉर्मेट:
-🩺 चिकित्सा जानकारी
-यह चिकित्सा सलाह के बारे में एक पैराग्राफ है। यह स्पष्ट और संक्षिप्त होना चाहिए।
+🍎 घरेलू उपाय
+• पहला घरेलू उपाय यहाँ
+• दूसरा घरेलू उपाय यहाँ
+• तीसरा घरेलू उपाय यहाँ
 
-💡 सुझाव और टिप्स
-यहाँ कुछ उपयोगी सुझाव हैं। प्रत्येक बिंदु पढ़ने में आसान होना चाहिए।
-
-• पहला सुझाव यहाँ
-• दूसरा सुझाव यहाँ
-• तीसरा सुझाव यहाँ
+⚠️ कोई भी उपाय आजमाने से पहले अपने डॉक्टर से सलाह लें।
 
 उचित स्पेसिंग के साथ उपयोगी गर्भावस्था मार्गदर्शन प्रदान करें।`;
             }
+
+            // Build contents array with conversation history for context
+            const contents = [];
+
+            // Add system context as first user message
+            contents.push({
+                role: 'user',
+                parts: [{ text: languageContext }]
+            });
+            contents.push({
+                role: 'model',
+                parts: [{ text: language === 'english' ? 'I understand. I will respond as a pregnancy support assistant in English with proper formatting.' : 'मैं समझ गया। मैं गर्भावस्था सहायक के रूप में हिंदी में उचित फॉर्मेटिंग के साथ उत्तर दूंगा।' }]
+            });
+
+            // Add conversation history for context (last 5 exchanges)
+            const recentHistory = conversationHistory.slice(-5);
+            for (const entry of recentHistory) {
+                contents.push({
+                    role: 'user',
+                    parts: [{ text: entry.question }]
+                });
+                contents.push({
+                    role: 'model',
+                    parts: [{ text: entry.answer }]
+                });
+            }
+
+            // Add the current question
+            contents.push({
+                role: 'user',
+                parts: [{ text: prompt }]
+            });
 
             const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
             const response = await fetch(url, {
@@ -79,12 +117,7 @@ Provide helpful pregnancy guidance with proper spacing.`;
                     'Content-Type': 'application/json',
                     'x-goog-api-key': this.apiKey
                 },
-                body: JSON.stringify({
-                    contents: [{ 
-                        role: 'user',
-                        parts: [{ text: `${languageContext}\n\nQuestion: ${prompt}` }] 
-                    }]
-                })
+                body: JSON.stringify({ contents })
             });
 
             if (!response.ok) {
