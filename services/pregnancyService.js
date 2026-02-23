@@ -19,12 +19,44 @@ class PregnancyService {
         }
     }
 
+    getTimeBasedGreeting(language) {
+        const hour = new Date().getHours();
+
+        if (language === 'english') {
+            if (hour >= 5 && hour < 12) {
+                return { emoji: '🌅', greeting: 'Good morning' };
+            } else if (hour >= 12 && hour < 17) {
+                return { emoji: '☀️', greeting: 'Good afternoon' };
+            } else if (hour >= 17 && hour < 21) {
+                return { emoji: '🌅', greeting: 'Good evening' };
+            } else {
+                return { emoji: '🌙', greeting: 'Good night' };
+            }
+        } else {
+            if (hour >= 5 && hour < 12) {
+                return { emoji: '🌅', greeting: 'शुभ प्रभात' };
+            } else if (hour >= 12 && hour < 17) {
+                return { emoji: '☀️', greeting: 'नमस्कार' };
+            } else if (hour >= 17 && hour < 21) {
+                return { emoji: '🌅', greeting: 'शुभ संध्या' };
+            } else {
+                return { emoji: '🌙', greeting: 'शुभ रात्रि' };
+            }
+        }
+    }
+
     async sendDailyHealthReminder(bot, user) {
         try {
             const language = user.language || 'hindi';
+            const { emoji, greeting } = this.getTimeBasedGreeting(language);
+
+            const healthQuestion = language === 'english'
+                ? 'How are you feeling today?'
+                : 'आज आप कैसा महसूस कर रही हैं?';
+
             const message = language === 'english'
-                ? `🌸 Good morning ${user.firstName}! Time for your daily health check. How are you feeling today?`
-                : `🌸 शुभ प्रभात ${user.firstName}! आपके दैनिक स्वास्थ्य जांच का समय हो गया है। आज आप कैसा महसूस कर रही हैं?`;
+                ? `${emoji} ${greeting} ${user.firstName}! Time for your daily health check. ${healthQuestion}`
+                : `${emoji} ${greeting} ${user.firstName}! आपके दैनिक स्वास्थ्य जांच का समय हो गया है। ${healthQuestion}`;
 
             if (user.telegramId) {
                 try { await bot.sendMessage(user.telegramId, message); } catch (e) {}
@@ -233,11 +265,12 @@ ${content.generalAdvice.map(point => `• ${point}`).join('\n')}
         try {
             let healthQuestions, options;
             const isEnglish = user.language === 'english';
-            
+            const { emoji, greeting } = this.getTimeBasedGreeting(user.language);
+
             if (isEnglish) {
-                healthQuestions = "🩺 Weekly Health Check\n\nHow are you feeling? Any new problems? Baby movements?";
+                healthQuestions = `${emoji} ${greeting} ${user.firstName}!\n\n🩺 Weekly Health Check\n\nHow are you feeling? Any new problems? Baby movements?`;
             } else {
-                healthQuestions = "🩺 साप्ताहिक स्वास्थ्य जांच\n\nआप कैसी महसूस कर रही हैं? क्या कोई नई परेशानी है? शिशु की हरकत महसूस हो रही है?";
+                healthQuestions = `${emoji} ${greeting} ${user.firstName}!\n\n🩺 साप्ताहिक स्वास्थ्य जांच\n\nआप कैसी महसूस कर रही हैं? क्या कोई नई परेशानी है? शिशु की हरकत महसूस हो रही है?`;
             }
 
             if (user.registrationSource === 'web' && user.webPushSubscription) {

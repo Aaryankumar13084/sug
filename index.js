@@ -248,6 +248,17 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
+// Test health check notification endpoint (for testing only)
+app.post('/api/test-notification', async (req, res) => {
+    try {
+        await pregnancyService.sendWeeklyUpdates(bot);
+        res.json({ success: true, message: 'Health check notifications sent to all active users' });
+    } catch (error) {
+        console.error('Error sending test notifications:', error);
+        res.status(500).json({ error: 'Failed to send notifications' });
+    }
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({

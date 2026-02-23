@@ -22,7 +22,7 @@ Sugam Garbh (सुगम गर्भ) is a bilingual (Hindi/English) Telegram 
 - `services/geminiService.js` — Google Gemini AI integration for conversational responses. Falls back gracefully if unavailable.
 - `services/keywordService.js` — Pattern-matching against predefined keyword datasets before falling back to Gemini AI.
 
-**Message handling flow:** User message → keyword match check → if no match, Gemini AI response → attach feedback buttons.
+**Message handling flow:** User message → keyword match check → if no match, Meta Llama 3.1 AI response (via OpenRouter) → attach feedback buttons.
 
 **Data layer:**
 - `models/User.js` — Mongoose schema with pre/post hooks for automatic AES-256-CBC encryption of sensitive fields (location, healthConditions).
@@ -41,11 +41,22 @@ Sugam Garbh (सुगम गर्भ) is a bilingual (Hindi/English) Telegram 
 
 ## Bilingual Design
 
-Language preference is stored per-user in MongoDB. All user-facing content (keywords, pregnancy weeks, bot messages, Gemini prompts) has Hindi and English variants. Keyword datasets and pregnancy week data are in separate files per language.
+Language preference is stored per-user in MongoDB. All user-facing content (keywords, pregnancy weeks, bot messages, AI prompts) has Hindi and English variants. Keyword datasets and pregnancy week data are in separate files per language.
 
 ## Environment Variables
 
-Key variables (see `.env.example`): `TELEGRAM_BOT_TOKEN`, `MONGODB_URI`, `ENCRYPTION_KEY` (32 chars), `PORT`, `AI_INTEGRATIONS_GEMINI_API_KEY`, `AI_INTEGRATIONS_GEMINI_BASE_URL`.
+Key variables (see `.env.example`): `TELEGRAM_BOT_TOKEN`, `MONGODB_URI`, `ENCRYPTION_KEY` (32 chars), `PORT`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`, `OPENROUTER_BASE_URL`, `OPENROUTER_MAX_TOKENS`.
+
+## AI Integration
+
+**Service file**: `services/geminiService.js`
+- Model: Meta Llama 3.1 70B Instruct (powerful open-source model via OpenRouter)
+- API: OpenRouter (OpenAI-compatible `/chat/completions`)
+- Auth: Bearer token in `Authorization` header using `OPENROUTER_API_KEY`
+- System prompts extracted to `getEnglishSystemPrompt()` and `getHindiSystemPrompt()` methods
+- Response cleanup: Removes formatting artifacts while preserving bullet points and emojis
+- Conversation history: Last 5 turns preserved for context
+- Error handling: Specific responses for 429 (rate limit), 401 (auth), 503 (unavailable)
 
 ## User Registration Flow
 

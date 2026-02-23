@@ -312,8 +312,11 @@ Just type your question naturally - no commands needed!`;
                 ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
                 : '\n\nमहत्वपूर्ण: पहले देसी नुस्खे और घरेलू उपाय बताएं। दवाई तभी बताएं जब मैं खुद पूछूं। छोटा जवाब दें (3-5 बुलेट पॉइंट)। विस्तार से तभी बताएं जब मैं कहूं।';
 
-            // Generate response using Gemini API
-            const response = await this.geminiService.generateResponse(userQuestion + responseStyleNote, language);
+            // Get conversation history for context
+            const conversationHistory = user && user.conversationHistory ? user.conversationHistory : [];
+
+            // Generate response using Gemini API with conversation history
+            const response = await this.geminiService.generateResponse(userQuestion + responseStyleNote, language, conversationHistory);
 
             // Send the AI-generated response with clean formatting
             const formattedResponse = language === 'english'
@@ -795,8 +798,8 @@ Stay healthy! 🤱`;
             // Create the full prompt with context
             const fullQuestion = text + contextPrompt + pregnancyContext + responseStyleContext;
 
-            // Generate response using Gemini API with context
-            const response = await this.geminiService.generateResponse(fullQuestion, user.language);
+            // Generate response using Gemini API with conversation history for better context
+            const response = await this.geminiService.generateResponse(fullQuestion, user.language, user.conversationHistory);
 
             // Store the conversation in history (keep only last 3)
             const conversationEntry = {
