@@ -6,14 +6,17 @@ class GeminiService {
         this.baseURL = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
         
         if (!this.apiKey || !this.baseURL) {
-            console.warn('Gemini AI integrations not fully configured. Using fallback if possible.');
+            console.warn('Gemini AI integrations not fully configured.');
         }
         
+        // Use a static base URL for Replit AI Integrations to ensure stability
+        // The SDK adds /v1 or /v1beta internally depending on apiVersion
         this.genAI = new GoogleGenerativeAI(this.apiKey);
-        // Using the recommended model from the integration
         this.model = this.genAI.getGenerativeModel(
             { model: "gemini-2.5-flash" },
-            { baseURL: this.baseURL }
+            { 
+              baseUrl: "http://localhost:1106/modelfarm/gemini"
+            }
         );
     }
 
