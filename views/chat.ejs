@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/form.css">
     <style>
@@ -315,6 +316,156 @@
             background: #2a2325;
             border-color: rgba(240, 141, 160, 0.15);
             color: var(--text-medium);
+        }
+
+        /* Registration Form in Chat Context */
+        .bot-message:has(.reg-form-container) {
+            max-width: 90%;
+            padding: 0;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+        }
+
+        .bot-message .reg-form-container {
+            margin: 0;
+        }
+
+        .bot-message:has(.reg-form-container) .bot-label {
+            padding: 14px 32px 0;
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .bot-message:has(.reg-form-container) {
+                max-width: 95%;
+            }
+        }
+
+        /* Flatpickr Date Picker Styling */
+        .flatpickr-calendar {
+            background: white;
+            border: 1.5px solid rgba(232, 114, 138, 0.15);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(232, 114, 138, 0.15);
+            font-family: 'Poppins', sans-serif;
+            z-index: 10000 !important;
+            position: absolute;
+        }
+
+        .flatpickr-calendar.open {
+            display: block !important;
+            z-index: 10000 !important;
+        }
+
+        .flatpickr-calendar.hasWeeks {
+            width: auto;
+        }
+
+        .flatpickr-months {
+            padding: 12px 16px;
+        }
+
+        .flatpickr-month {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .flatpickr-prev-month,
+        .flatpickr-next-month {
+            color: var(--primary-pink);
+            fill: var(--primary-pink);
+        }
+
+        .flatpickr-prev-month:hover,
+        .flatpickr-next-month:hover {
+            color: var(--primary-dark);
+            fill: var(--primary-dark);
+        }
+
+        .flatpickr-weekdays {
+            background: transparent;
+            color: var(--text-medium);
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 0;
+        }
+
+        .flatpickr-days {
+            padding: 0 8px 8px;
+        }
+
+        .flatpickr-day {
+            color: var(--text-dark);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin: 3px;
+        }
+
+        .flatpickr-day.selected {
+            background: var(--primary-pink);
+            border-color: var(--primary-pink);
+            color: white;
+            font-weight: 600;
+        }
+
+        .flatpickr-day.selected:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .flatpickr-day.today {
+            border-color: var(--primary-pink);
+            color: var(--primary-pink);
+            font-weight: 600;
+        }
+
+        .flatpickr-day.today:hover {
+            background: rgba(232, 114, 138, 0.1);
+        }
+
+        .flatpickr-day:hover {
+            background: var(--soft-pink-bg);
+            color: var(--text-dark);
+        }
+
+        .flatpickr-day.disabled,
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            color: #ccc;
+        }
+
+        /* Dark mode for date picker */
+        [data-theme="dark"] .flatpickr-calendar {
+            background: #1e1a1b;
+            border-color: rgba(240, 141, 160, 0.2);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="dark"] .flatpickr-month {
+            color: var(--text-dark);
+        }
+
+        [data-theme="dark"] .flatpickr-weekdays {
+            color: #c4adb0;
+        }
+
+        [data-theme="dark"] .flatpickr-day {
+            color: var(--text-dark);
+        }
+
+        [data-theme="dark"] .flatpickr-day:hover {
+            background: #2a2325;
+        }
+
+        [data-theme="dark"] .flatpickr-day.today {
+            border-color: var(--primary-pink);
+        }
+
+        [data-theme="dark"] .flatpickr-day.disabled,
+        [data-theme="dark"] .flatpickr-day.prevMonthDay,
+        [data-theme="dark"] .flatpickr-day.nextMonthDay {
+            color: #555;
         }
     </style>
     <style>
@@ -665,9 +816,9 @@
         </main>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/hi.js"></script>
     <script>
-        const PUBLIC_VAPID_KEY = 'BMDnNdEtZZydvv-bMfE0eRn_Y6P2p8IuYePSjKDLLYAzs0Gzk2esxVy8la4Yve5bIy1u0-mbsIiNbsA6WSrvRRo';
-
         // Persistent Session ID Logic
         let sessionId = localStorage.getItem('sugam-session-id');
         if (!sessionId) {
@@ -761,13 +912,112 @@
 
             if (!isUser) {
                 const label = languageSelect.value === 'hi' ? 'सुगम सहायक' : 'Sugam Assistant';
-                div.innerHTML = `<div class="bot-label"><i class="fas fa-heart"></i> ${label}</div>${text.replace(/\n/g, '<br>')}`;
+                // Don't replace newlines with <br> if text contains HTML form elements
+                const hasFormElements = text.includes('<form') || text.includes('reg-form-container') || text.includes('<input');
+                const processedText = hasFormElements ? text : text.replace(/\n/g, '<br>');
+                div.innerHTML = `<div class="bot-label"><i class="fas fa-heart"></i> ${label}</div>${processedText}`;
             } else {
                 div.textContent = text;
             }
 
             chatBox.appendChild(div);
             chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Initialize date picker if form is added
+            if (text.includes('reg-form-container')) {
+                // Initialize with multiple attempts to ensure it's ready
+                setTimeout(() => initializeDatePicker(), 50);
+                setTimeout(() => initializeDatePicker(), 150);
+                setTimeout(() => initializeDatePicker(), 300);
+            }
+        }
+
+        function validateConceptionDate(dateStr) {
+            const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+            if (!regex.test(dateStr)) return false;
+
+            const [day, month, year] = dateStr.split('/').map(Number);
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+                return false;
+            }
+
+            // Date should not be in future
+            if (date > new Date()) return false;
+
+            // Date should be within last 10 months (about 280+ days)
+            const tenMonthsAgo = new Date();
+            tenMonthsAgo.setMonth(tenMonthsAgo.getMonth() - 10);
+            if (date < tenMonthsAgo) return false;
+
+            return true;
+        }
+
+        function initializeDatePicker() {
+            // Wait for flatpickr to be available
+            if (typeof flatpickr === 'undefined') {
+                setTimeout(initializeDatePicker, 100);
+                return;
+            }
+
+            const dateInput = document.querySelector('#reg-conceptionDate');
+            if (dateInput && !dateInput._flatpickr) {
+                // Calculate min date (10 months ago)
+                const minDate = new Date();
+                minDate.setMonth(minDate.getMonth() - 10);
+
+                try {
+                    flatpickr(dateInput, {
+                        mode: 'single',
+                        dateFormat: 'd/m/Y',
+                        placeholder: 'DD/MM/YYYY',
+                        maxDate: 'today',
+                        minDate: minDate,
+                        allowInput: true,
+                        enableTime: false,
+                        locale: languageSelect.value === 'hi' ? 'hi' : 'en',
+                        onOpen: function() {
+                            // Ensure calendar is visible and styled properly
+                            const calendar = document.querySelector('.flatpickr-calendar');
+                            if (calendar) {
+                                calendar.style.zIndex = '10000';
+                            }
+                        },
+                        onClose: function(selectedDates, dateStr) {
+                            if (dateStr) {
+                                clearFieldError(dateInput);
+                            }
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error initializing date picker:', e);
+                }
+            }
+        }
+
+        function clearFieldError(input) {
+            input.classList.remove('error');
+            const errorMsg = input.parentElement.querySelector('.error-msg');
+            if (errorMsg) errorMsg.remove();
+        }
+
+        function setFieldError(input, message) {
+            input.classList.add('error');
+            let errorMsg = input.parentElement.querySelector('.error-msg');
+            if (!errorMsg) {
+                errorMsg = document.createElement('div');
+                errorMsg.className = 'error-msg';
+                input.parentElement.appendChild(errorMsg);
+            }
+            errorMsg.textContent = message;
+
+            // Auto-remove error after 5 seconds
+            setTimeout(() => {
+                clearFieldError(input);
+            }, 5000);
         }
 
         async function submitRegistrationForm(event) {
@@ -775,13 +1025,55 @@
             const form = event.target;
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
-            
+
+            // Client-side validation
+            const firstNameInput = form.querySelector('#reg-firstName');
+            const dateInput = form.querySelector('#reg-conceptionDate');
+            const ageInput = form.querySelector('#reg-age');
+
+            let isValid = true;
+
+            // Clear previous errors
+            [firstNameInput, dateInput, ageInput].forEach(input => {
+                if (input) clearFieldError(input);
+            });
+
+            // Validate first name
+            if (!data.firstName || data.firstName.trim().length < 2) {
+                setFieldError(firstNameInput,
+                    languageSelect.value === 'hi' ? 'कृपया वैध नाम दर्ज करें' : 'Please enter a valid name');
+                isValid = false;
+            }
+
+            // Validate conception date
+            if (!data.conceptionDate || !validateConceptionDate(data.conceptionDate)) {
+                setFieldError(dateInput,
+                    languageSelect.value === 'hi'
+                        ? 'कृपया सही प्रारूप में तिथि दर्ज करें (DD/MM/YYYY)'
+                        : 'Please enter a valid date (DD/MM/YYYY)');
+                isValid = false;
+            }
+
+            // Validate age if provided
+            if (data.age && (isNaN(data.age) || data.age < 15 || data.age > 60)) {
+                setFieldError(ageInput,
+                    languageSelect.value === 'hi'
+                        ? 'उम्र 15 से 60 के बीच होनी चाहिए'
+                        : 'Age must be between 15 and 60');
+                isValid = false;
+            }
+
+            if (!isValid) return;
+
             data.language = languageSelect.value === 'en' ? 'english' : 'hindi';
 
-            const submitBtn = form.querySelector('button');
-            const originalText = submitBtn.textContent;
+            const submitBtn = form.querySelector('.reg-submit-btn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const originalText = btnText.textContent;
+
             submitBtn.disabled = true;
-            submitBtn.textContent = languageSelect.value === 'hi' ? 'प्रक्रिया जारी है...' : 'Processing...';
+            submitBtn.classList.add('loading');
+            btnText.style.opacity = '0.7';
 
             try {
                 const response = await fetch('/api/register', {
@@ -793,18 +1085,46 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    form.parentElement.innerHTML = `<div class="text-center py-2"><i class="fas fa-check-circle text-success me-2"></i>${result.message}</div>`;
+                    submitBtn.classList.remove('loading');
+                    const successMsg = result.message ||
+                        (languageSelect.value === 'hi'
+                            ? 'पंजीकरण पूर्ण हुआ!'
+                            : 'Registration completed!');
+
+                    // Animate success state
+                    form.parentElement.innerHTML = `
+                        <div style="text-align: center; padding: 20px 16px; animation: scaleIn 0.5s ease;">
+                            <div style="font-size: 2.5rem; margin-bottom: 12px; animation: scaleIn 0.6s ease 0.2s both;">✨</div>
+                            <h5 style="color: var(--primary-pink); font-weight: 700; margin-bottom: 8px;">
+                                ${languageSelect.value === 'hi' ? 'पंजीकरण सफल!' : 'Registration Successful!'}
+                            </h5>
+                            <p style="color: var(--text-medium); font-size: 0.9rem; margin-bottom: 0;">
+                                ${successMsg}
+                            </p>
+                        </div>
+                    `;
                     registerPush();
                 } else {
-                    alert(result.error || 'Registration failed');
+                    const errorMsg = result.error ||
+                        (languageSelect.value === 'hi'
+                            ? 'पंजीकरण विफल। कृपया पुनः प्रयास करें।'
+                            : 'Registration failed. Please try again.');
+
+                    setFieldError(firstNameInput, errorMsg);
                     submitBtn.disabled = false;
-                    submitBtn.textContent = originalText;
+                    submitBtn.classList.remove('loading');
+                    btnText.style.opacity = '1';
                 }
             } catch (err) {
                 console.error('Registration Error:', err);
-                alert('Connection error. Please try again.');
+                const errMsg = languageSelect.value === 'hi'
+                    ? 'त्रुटि: सर्वर से कनेक्ट नहीं हो सका।'
+                    : 'Error: Could not connect to the server.';
+
+                setFieldError(firstNameInput, errMsg);
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+                submitBtn.classList.remove('loading');
+                btnText.style.opacity = '1';
             }
         }
 

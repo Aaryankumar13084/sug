@@ -25,7 +25,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Get bot token from environment
-const BOT_TOKEN = '8166845761:AAH0Ik831wdflah3Zum5CQ6sM0gocKvgMZI';
+const BOT_TOKEN = '7576551177:AAExz4LaTshH5mJnmEhgbVMK_D4icGfh7hs';
 
 if (!BOT_TOKEN) {
     console.error('TELEGRAM_BOT_TOKEN is required in environment variables');
@@ -158,7 +158,7 @@ app.get('/api/sessions/:sessionId/:chatSessionId', async (req, res) => {
             console.log('Session not found');
             return res.status(404).json({ error: 'Session not found' });
         }
-        
+
         // Decrypt messages before sending to client
         const decryptedMessages = session.messages.map(msg => {
             const { decrypt } = require('./utils/encryption');
@@ -167,9 +167,9 @@ app.get('/api/sessions/:sessionId/:chatSessionId', async (req, res) => {
                 text: decrypt(msg.text)
             };
         });
-        
+
         console.log(`Found session with ${decryptedMessages.length} messages`);
-        res.json({ 
+        res.json({
             session: {
                 ...session.toObject(),
                 messages: decryptedMessages

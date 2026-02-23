@@ -52,25 +52,69 @@ class BotService {
 
                 const formHtml = `
 <div class="reg-form-container">
-    <h4>${langFull === 'english' ? 'Registration' : 'पंजीकरण'}</h4>
+    <h4>${langFull === 'english' ? 'Complete Registration' : 'पंजीकरण पूर्ण करें'}</h4>
     <form onsubmit="submitRegistrationForm(event)">
         <div class="reg-form-group">
-            <label>${langFull === 'english' ? 'First Name' : 'पहला नाम'}</label>
-            <input type="text" name="firstName" required placeholder="${langFull === 'english' ? 'Your name' : 'आपका नाम'}">
+            <label for="reg-firstName">
+                ${langFull === 'english' ? 'First Name' : 'पहला नाम'}
+                <span style="color: var(--primary-pink);">*</span>
+            </label>
+            <input
+                type="text"
+                id="reg-firstName"
+                name="firstName"
+                required
+                aria-required="true"
+                placeholder="${langFull === 'english' ? 'Your name' : 'आपका नाम'}"
+            >
         </div>
         <div class="reg-form-group">
-            <label>${langFull === 'english' ? 'Conception Date' : 'गर्भधारण की तिथि'}</label>
-            <input type="text" name="conceptionDate" required placeholder="DD/MM/YYYY">
+            <label for="reg-conceptionDate">
+                ${langFull === 'english' ? 'Conception Date' : 'गर्भधारण की तिथि'}
+                <span style="color: var(--primary-pink);">*</span>
+            </label>
+            <input
+                type="text"
+                id="reg-conceptionDate"
+                name="conceptionDate"
+                required
+                aria-required="true"
+                placeholder="DD/MM/YYYY"
+                pattern="\\d{2}/\\d{2}/\\d{4}"
+            >
+            <small style="font-size: 0.8rem; color: var(--text-light); margin-top: 3px; display: block;">
+                ${langFull === 'english' ? 'Format: DD/MM/YYYY' : 'प्रारूप: DD/MM/YYYY'}
+            </small>
         </div>
         <div class="reg-form-group">
-            <label>${langFull === 'english' ? 'Age' : 'उम्र'}</label>
-            <input type="number" name="age" placeholder="${langFull === 'english' ? 'Your age' : 'आपकी उम्र'}">
+            <label for="reg-age">
+                ${langFull === 'english' ? 'Age' : 'उम्र'}
+                <span style="color: var(--text-light);">(${langFull === 'english' ? 'Optional' : 'वैकल्पिक'})</span>
+            </label>
+            <input
+                type="number"
+                id="reg-age"
+                name="age"
+                min="15"
+                max="60"
+                placeholder="${langFull === 'english' ? 'Your age' : 'आपकी उम्र'}"
+            >
         </div>
         <div class="reg-form-group">
-            <label>${langFull === 'english' ? 'Location' : 'स्थान'}</label>
-            <input type="text" name="location" placeholder="${langFull === 'english' ? 'City/Area' : 'शहर/क्षेत्र'}">
+            <label for="reg-location">
+                ${langFull === 'english' ? 'Location' : 'स्थान'}
+                <span style="color: var(--text-light);">(${langFull === 'english' ? 'Optional' : 'वैकल्पिक'})</span>
+            </label>
+            <input
+                type="text"
+                id="reg-location"
+                name="location"
+                placeholder="${langFull === 'english' ? 'City/Area' : 'शहर/क्षेत्र'}"
+            >
         </div>
-        <button type="submit" class="reg-submit-btn">${langFull === 'english' ? 'Register Now' : 'अभी पंजीकरण करें'}</button>
+        <button type="submit" class="reg-submit-btn">
+            <span class="btn-text">${langFull === 'english' ? 'Complete Registration' : 'पंजीकरण पूर्ण करें'}</span>
+        </button>
     </form>
 </div>
 `;
