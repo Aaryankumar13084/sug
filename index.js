@@ -91,7 +91,21 @@ app.get('/chat', (req, res) => {
 app.post('/api/chat', async (req, res) => {
     const { message, language, sessionId, chatSessionId } = req.body;
     try {
+        console.log(`Processing web chat: session=${sessionId}, chatSession=${chatSessionId}`);
         const response = await botService.handleWebMessage(message, language || 'hi', sessionId, chatSessionId);
+        
+        // Save to chat session if provided
+        if (chatSessionId) {
+            const ChatSession = require('./models/ChatSession');
+            const session = await ChatSession.findById(chatSessionId);
+            if (session) {
+                session.messages.push({ role: 'user', text: message });
+                session.messages.push({ role: 'model', text: response });
+                await session.save();
+                console.log('Messages saved to session');
+            }
+        }
+        
         res.json({ response });
     } catch (error) {
         console.error('Web Chat Error:', error);
@@ -102,9 +116,11 @@ app.post('/api/chat', async (req, res) => {
 // Get all chat sessions for a web user
 app.get('/api/sessions/:sessionId', async (req, res) => {
     try {
+        console.log(`Fetching sessions for sessionId: ${req.params.sessionId}`);
         const sessions = await ChatSession.find({ userSessionId: req.params.sessionId })
             .select('title createdAt updatedAt')
             .sort({ updatedAt: -1 });
+        console.log(`Found ${sessions.length} sessions`);
         res.json({ sessions });
     } catch (error) {
         console.error('Error fetching sessions:', error);
@@ -116,11 +132,13 @@ app.get('/api/sessions/:sessionId', async (req, res) => {
 app.post('/api/sessions', async (req, res) => {
     try {
         const { sessionId, title } = req.body;
+        console.log(`Creating new session for sessionId: ${sessionId}, title: ${title}`);
         const newSession = new ChatSession({
             userSessionId: sessionId,
             title: title || 'New Chat'
         });
         await newSession.save();
+        console.log(`Created session with ID: ${newSession._id}`);
         res.status(201).json({ session: newSession });
     } catch (error) {
         console.error('Error creating session:', error);
@@ -131,14 +149,32 @@ app.post('/api/sessions', async (req, res) => {
 // Get a specific chat session's messages
 app.get('/api/sessions/:sessionId/:chatSessionId', async (req, res) => {
     try {
+        console.log(`Fetching messages for chatSessionId: ${req.params.chatSessionId}, userSessionId: ${req.params.sessionId}`);
         const session = await ChatSession.findOne({
             _id: req.params.chatSessionId,
             userSessionId: req.params.sessionId
         });
         if (!session) {
+            console.log('Session not found');
             return res.status(404).json({ error: 'Session not found' });
         }
-        res.json({ session });
+        
+        // Decrypt messages before sending to client
+        const decryptedMessages = session.messages.map(msg => {
+            const { decrypt } = require('./utils/encryption');
+            return {
+                ...msg.toObject(),
+                text: decrypt(msg.text)
+            };
+        });
+        
+        console.log(`Found session with ${decryptedMessages.length} messages`);
+        res.json({ 
+            session: {
+                ...session.toObject(),
+                messages: decryptedMessages
+            }
+        });
     } catch (error) {
         console.error('Error fetching session details:', error);
         res.status(500).json({ error: 'Failed to fetch session details' });
