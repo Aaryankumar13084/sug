@@ -8,29 +8,20 @@ class GeminiService {
         if (!this.apiKey || !this.baseURL) {
             console.warn('Gemini AI integrations not fully configured.');
         }
-        
-        // Final configuration: Use the baseURL from environment but strip the version
-        // Replit AI Integrations provides a URL that includes /v1beta
-        // @google/generative-ai appends /v1beta (or /v1) internally.
-        this.genAI = new GoogleGenerativeAI(this.apiKey);
-        this.model = this.genAI.getGenerativeModel(
-            { model: "gemini-2.5-flash" },
-            { 
-              baseUrl: this.baseURL.replace(/\/v1beta$/, '')
-            }
-        );
     }
 
     async generateResponse(prompt, language = 'hindi') {
-        if (!this.genAI) {
+        if (!this.apiKey || !this.baseURL) {
             return language === 'english' 
                 ? 'Gemini AI service is not available. Please configure GEMINI_API_KEY.'
                 : 'जेमिनी AI सेवा उपलब्ध नहीं है। कृपया GEMINI_API_KEY कॉन्फ़िगर करें।';
         }
 
         try {
-            let languageContext, fullPrompt;
+            // Replit AI Integrations specific fetch to bypass SDK endpoint issues
+            const url = `${this.baseURL}/models/gemini-2.5-flash:generateContent`;
             
+            let languageContext;
             if (language === 'english') {
                 languageContext = `You are a helpful pregnancy support assistant. Please respond ONLY in English.
 
@@ -55,7 +46,6 @@ Here are some helpful tips. Each point should be easy to read.
 • Third tip here
 
 Provide helpful pregnancy guidance with proper spacing.`;
-                fullPrompt = `${languageContext}\n\nQuestion: ${prompt}`;
             } else {
                 languageContext = `आप एक सहायक गर्भावस्था सहायक हैं। कृपया केवल हिंदी में उत्तर दें।
 
@@ -80,12 +70,35 @@ Provide helpful pregnancy guidance with proper spacing.`;
 • तीसरा सुझाव यहाँ
 
 उचित स्पेसिंग के साथ उपयोगी गर्भावस्था मार्गदर्शन प्रदान करें।`;
-                fullPrompt = `${languageContext}\n\nप्रश्न: ${prompt}`;
             }
+
+            const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': this.apiKey
+                },
+                body: JSON.stringify({
+                    contents: [{ 
+                        role: 'user',
+                        parts: [{ text: `${languageContext}\n\nQuestion: ${prompt}` }] 
+                    }]
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(`AI API error: ${response.status} ${JSON.stringify(errorData)}`);
+            }
+
+            const data = await response.json();
             
-            const result = await this.model.generateContent(fullPrompt);
-            const response = await result.response;
-            let responseText = response.text();
+            if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts[0]) {
+              throw new Error('Invalid response format from AI API');
+            }
+
+            let responseText = data.candidates[0].content.parts[0].text;
             
             // Clean up formatting - improve structure and readability with proper line spacing
             responseText = responseText
@@ -113,7 +126,7 @@ Provide helpful pregnancy guidance with proper spacing.`;
     }
 
     isAvailable() {
-        return this.genAI !== null;
+        return !!this.apiKey && !!this.baseURL;
     }
 }
 
