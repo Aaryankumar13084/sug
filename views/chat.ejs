@@ -613,6 +613,8 @@
             if ('serviceWorker' in navigator) {
                 try {
                     const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                    console.log('Service Worker registered');
+                    
                     const subscription = await register.pushManager.subscribe({
                         userVisibleOnly: true,
                         applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
@@ -623,10 +625,23 @@
                         body: JSON.stringify({ subscription, sessionId }),
                         headers: { 'content-type': 'application/json' }
                     });
+                    console.log('User subscribed to push');
                 } catch (err) {
                     console.error('Push registration failed:', err);
                 }
             }
+        }
+
+        // Auto-register push if permission already granted
+        if (Notification.permission === 'granted') {
+            registerPush();
+        } else if (Notification.permission === 'default') {
+            // Optional: Request after some interaction or delay
+            setTimeout(() => {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') registerPush();
+                });
+            }, 5000);
         }
 
         (function () {

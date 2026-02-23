@@ -416,6 +416,64 @@
             const current = html.getAttribute('data-theme');
             setTheme(current === 'dark' ? 'light' : 'dark');
         });
+
+        // Service Worker Registration for Push Notifications
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('Service Worker registered', reg))
+                    .catch(err => console.error('Service Worker registration failed', err));
+            });
+        }
+
+        // Request Notification Permission
+        async function requestNotificationPermission() {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('Notification permission granted');
+                subscribeUserToPush();
+            }
+        }
+
+        async function subscribeUserToPush() {
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array('<%= process.env.PUBLIC_VAPID_KEY %>')
+                });
+
+                const sessionId = localStorage.getItem('sugam_session_id') || Math.random().toString(36).substring(7);
+                localStorage.setItem('sugam_session_id', sessionId);
+
+                await fetch('/api/subscribe', {
+                    method: 'POST',
+                    body: JSON.stringify({ subscription, sessionId }),
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                console.log('User subscribed to push');
+            } catch (err) {
+                console.error('Failed to subscribe user', err);
+            }
+        }
+
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // Auto-request permission on first interaction or after delay
+        setTimeout(() => {
+            if (Notification.permission === 'default') {
+                requestNotificationPermission();
+            }
+        }, 3000);
     </script>
 </body>
 </html>
