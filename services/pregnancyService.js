@@ -6,13 +6,41 @@ class PregnancyService {
     async sendWeeklyUpdates(bot) {
         try {
             const users = await User.find({ isActive: true });
-            console.log(`Checking weekly updates for ${users.length} users...`);
+            console.log(`Checking updates for ${users.length} users...`);
 
             for (const user of users) {
+                // Send daily health checkup reminder
+                await this.sendDailyHealthReminder(bot, user);
+                
                 await this.checkAndSendWeeklyUpdate(bot, user);
             }
         } catch (error) {
             console.error('Error in sendWeeklyUpdates:', error);
+        }
+    }
+
+    async sendDailyHealthReminder(bot, user) {
+        try {
+            const language = user.language || 'hindi';
+            const message = language === 'english'
+                ? `🌸 Good morning ${user.firstName}! Time for your daily health check. How are you feeling today?`
+                : `🌸 शुभ प्रभात ${user.firstName}! आपके दैनिक स्वास्थ्य जांच का समय हो गया है। आज आप कैसा महसूस कर रही हैं?`;
+
+            if (user.telegramId) {
+                try { await bot.sendMessage(user.telegramId, message); } catch (e) {}
+            }
+
+            if (user.webPushSubscription) {
+                const NotificationService = require('./notificationService');
+                const ns = new NotificationService();
+                await ns.sendNotification(user.webPushSubscription, {
+                    title: language === 'english' ? 'Daily Health Check' : 'दैनिक स्वास्थ्य जांच',
+                    body: message,
+                    url: '/chat'
+                });
+            }
+        } catch (error) {
+            console.error('Error sending daily reminder:', error);
         }
     }
 

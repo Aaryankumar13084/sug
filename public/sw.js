@@ -1,22 +1,35 @@
-self.addEventListener('push', function(event) {
-    const data = event.data.json();
-    const options = {
-        body: data.body,
-        icon: '/images/logo.png', // Make sure this exists or use a fallback
-        badge: '/images/logo.png',
-        data: {
-            url: data.url || '/'
+(function() {
+    'use strict';
+
+    self.addEventListener('push', function(event) {
+        console.log('Push received:', event);
+        let data = {};
+        if (event.data) {
+            try {
+                data = event.data.json();
+            } catch (e) {
+                data = { title: 'Sugam Garbh', body: event.data.text() };
+            }
         }
-    };
 
-    event.waitUntil(
-        self.registration.showNotification(data.title, options)
-    );
-});
+        const options = {
+            body: data.body || 'New update from Sugam Garbh',
+            icon: data.icon || '/images/logo.png',
+            badge: '/images/badge.png',
+            data: {
+                url: data.url || '/'
+            }
+        };
 
-self.addEventListener('notificationclick', function(event) {
-    event.notification.close();
-    event.waitUntil(
-        clients.openWindow(event.notification.data.url)
-    );
-});
+        event.waitUntil(
+            self.registration.showNotification(data.title || 'Sugam Garbh', options)
+        );
+    });
+
+    self.addEventListener('notificationclick', function(event) {
+        event.notification.close();
+        event.waitUntil(
+            clients.openWindow(event.notification.data.url)
+        );
+    });
+})();

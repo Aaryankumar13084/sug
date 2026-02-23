@@ -62,6 +62,14 @@ class BotService {
             <label>${langFull === 'english' ? 'Conception Date' : 'गर्भधारण की तिथि'}</label>
             <input type="text" name="conceptionDate" required placeholder="DD/MM/YYYY">
         </div>
+        <div class="reg-form-group">
+            <label>${langFull === 'english' ? 'Age' : 'उम्र'}</label>
+            <input type="number" name="age" placeholder="${langFull === 'english' ? 'Your age' : 'आपकी उम्र'}">
+        </div>
+        <div class="reg-form-group">
+            <label>${langFull === 'english' ? 'Location' : 'स्थान'}</label>
+            <input type="text" name="location" placeholder="${langFull === 'english' ? 'City/Area' : 'शहर/क्षेत्र'}">
+        </div>
         <button type="submit" class="reg-submit-btn">${langFull === 'english' ? 'Register Now' : 'अभी पंजीकरण करें'}</button>
     </form>
 </div>

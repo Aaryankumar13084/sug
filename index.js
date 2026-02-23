@@ -216,7 +216,7 @@ app.post('/api/subscribe', async (req, res) => {
 
 // Registration API endpoint
 app.post('/api/register', async (req, res) => {
-    const { firstName, conceptionDate, sessionId } = req.body;
+    const { firstName, conceptionDate, sessionId, age, location, parity, healthConditions, language } = req.body;
     try {
         const dueDate = parseDate(conceptionDate);
         if (!dueDate || !isValidDate(dueDate) || !isValidConceptionDate(dueDate)) {
@@ -224,12 +224,16 @@ app.post('/api/register', async (req, res) => {
         }
 
         // Use sessionId to find and update or create new user
-        // This ensures a session only has one user profile
         const user = await User.findOneAndUpdate(
             { sessionId: sessionId },
             {
                 firstName: firstName,
                 dueDate: dueDate,
+                age: age,
+                location: location,
+                parity: parity,
+                healthConditions: healthConditions || [],
+                language: language || 'hindi',
                 registrationSource: 'web',
                 isActive: true,
                 consentGiven: true
@@ -240,10 +244,6 @@ app.post('/api/register', async (req, res) => {
         res.json({ message: 'Registration successful!', user });
     } catch (error) {
         console.error('Registration API Error:', error);
-        if (error.code === 11000) {
-            console.error('Duplicate Key Info:', JSON.stringify(error.keyValue));
-            return res.status(400).json({ error: 'Registration failed: Duplicate session or ID error.' });
-        }
         res.status(500).json({ error: 'Failed to register' });
     }
 });

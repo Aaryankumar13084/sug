@@ -676,6 +676,8 @@
             const form = event.target;
             const formData = new FormData(form);
             const data = Object.fromEntries(formData.entries());
+            
+            data.language = languageSelect.value === 'en' ? 'english' : 'hindi';
 
             const submitBtn = form.querySelector('button');
             const originalText = submitBtn.textContent;
