@@ -93,7 +93,7 @@ app.post('/api/chat', async (req, res) => {
     try {
         console.log(`Processing web chat: session=${sessionId}, chatSession=${chatSessionId}`);
         const response = await botService.handleWebMessage(message, language || 'hi', sessionId, chatSessionId);
-        
+
         // Save to chat session if provided
         if (chatSessionId) {
             const ChatSession = require('./models/ChatSession');
@@ -105,7 +105,7 @@ app.post('/api/chat', async (req, res) => {
                 console.log('Messages saved to session');
             }
         }
-        
+
         res.json({ response });
     } catch (error) {
         console.error('Web Chat Error:', error);

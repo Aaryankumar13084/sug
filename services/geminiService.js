@@ -1,6 +1,6 @@
 class GeminiService {
     constructor() {
-        this.apiKey = process.env.OPENROUTER_API_KEY || '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';
+        this.apiKey = process.env.OPENROUTER_API_KEY;
         this.baseURL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
         this.model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-70b-instruct';
         this.maxTokens = parseInt(process.env.OPENROUTER_MAX_TOKENS || '4096', 10);
