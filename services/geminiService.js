@@ -9,13 +9,14 @@ class GeminiService {
             console.warn('Gemini AI integrations not fully configured.');
         }
         
-        // Use a static base URL for Replit AI Integrations to ensure stability
-        // The SDK adds /v1 or /v1beta internally depending on apiVersion
+        // Final configuration: Use the baseURL from environment but strip the version
+        // Replit AI Integrations provides a URL that includes /v1beta
+        // @google/generative-ai appends /v1beta (or /v1) internally.
         this.genAI = new GoogleGenerativeAI(this.apiKey);
         this.model = this.genAI.getGenerativeModel(
             { model: "gemini-2.5-flash" },
             { 
-              baseUrl: "http://localhost:1106/modelfarm/gemini"
+              baseUrl: this.baseURL.replace(/\/v1beta$/, '')
             }
         );
     }
