@@ -297,14 +297,15 @@ Keep it concise and practical for week ${currentWeek}.`
 
         // Generate Nutrition chart using AI
         const nutritionPrompt = userLanguage === 'english'
-            ? `You are a pregnancy nutrition expert. Provide a complete nutrition guide for week ${currentWeek} of pregnancy. Format as:
+            ? `You are a pregnancy nutrition expert. Provide a complete nutrition guide for week ${currentWeek} of pregnancy. IMPORTANT: Include both vegetarian and non-vegetarian options with alternatives. Format as:
 🥗 <b>Nutrition Chart for Week ${currentWeek}</b>
 
 <b>Daily Calorie Needs:</b>
 [calorie requirement]
 
-<b>Protein Sources:</b>
-[bullet points]
+<b>Protein Sources (Vegetarian & Non-Vegetarian):</b>
+• Non-veg: [options like egg, fish, chicken]
+• Vegetarian: [options like dal, paneer, beans]
 
 <b>Vegetables to Include:</b>
 [bullet points]
@@ -321,23 +322,24 @@ Keep it concise and practical for week ${currentWeek}.`
 <b>Hydration:</b>
 [hydration needs]
 
-<b>Sample Meal Plan:</b>
-🍳 <b>Breakfast:</b> [suggestion]
-🍲 <b>Lunch:</b> [suggestion]
-🥘 <b>Dinner:</b> [suggestion]
-🥤 <b>Snacks:</b> [suggestion]
+<b>Sample Meal Plan (Choose Vegetarian or Non-Vegetarian):</b>
+🍳 <b>Breakfast:</b> [veg & non-veg options]
+🍲 <b>Lunch:</b> [veg & non-veg options]
+🥘 <b>Dinner:</b> [veg & non-veg options]
+🥤 <b>Snacks:</b> [options]
 
 <b>📋 Disclaimer:</b> This is general guidance. Please follow your doctor's specific recommendations. Every pregnancy is unique.
 
-Make it practical and specific for week ${currentWeek}.`
-            : `आप एक गर्भावस्था पोषण विशेषज्ञ हैं। गर्भावस्था के सप्ताह ${currentWeek} के लिए एक संपूर्ण पोषण गाइड प्रदान करें। इस प्रारूप में:
+Make it practical with both diet options for week ${currentWeek}.`
+            : `आप एक गर्भावस्था पोषण विशेषज्ञ हैं। गर्भावस्था के सप्ताह ${currentWeek} के लिए एक संपूर्ण पोषण गाइड प्रदान करें। महत्वपूर्ण: शाकाहारी और मांसाहारी दोनों विकल्प विकल्प दें। इस प्रारूप में:
 🥗 <b>सप्ताह ${currentWeek} के लिए पोषण चार्ट</b>
 
 <b>दैनिक कैलोरी आवश्यकता:</b>
 [कैलोरी आवश्यकता]
 
-<b>प्रोटीन के स्रोत:</b>
-[बुलेट पॉइंट्स]
+<b>प्रोटीन के स्रोत (शाकाहारी और मांसाहारी):</b>
+• मांसाहारी: [अंडा, मछली, चिकन जैसे विकल्प]
+• शाकाहारी: [दाल, पनीर, बीन्स जैसे विकल्प]
 
 <b>शामिल करने योग्य सब्जियां:</b>
 [बुलेट पॉइंट्स]
@@ -354,15 +356,15 @@ Make it practical and specific for week ${currentWeek}.`
 <b>हाइड्रेशन:</b>
 [हाइड्रेशन की आवश्यकता]
 
-<b>नमूना भोजन योजना:</b>
-🍳 <b>नाश्ता:</b> [सुझाव]
-🍲 <b>दोपहर का भोजन:</b> [सुझाव]
-🥘 <b>रात का भोजन:</b> [सुझाव]
-🥤 <b>स्नैक्स:</b> [सुझाव]
+<b>नमूना भोजन योजना (शाकाहारी या मांसाहारी चुनें):</b>
+🍳 <b>नाश्ता:</b> [दोनों विकल्प]
+🍲 <b>दोपहर का भोजन:</b> [दोनों विकल्प]
+🥘 <b>रात का भोजन:</b> [दोनों विकल्प]
+🥤 <b>स्नैक्स:</b> [विकल्प]
 
 <b>📋 अस्वीकरण:</b> यह सामान्य मार्गदर्शन है। कृपया अपने डॉक्टर की विशिष्ट सिफारिशों का पालन करें। हर गर्भावस्था अद्वितीय है।
 
-सप्ताह ${currentWeek} के लिए व्यावहारिक और विशिष्ट बनाएं।`;
+सप्ताह ${currentWeek} के लिए दोनों आहार विकल्प के साथ व्यावहारिक बनाएं।`;
 
         const nutritionMsg = await geminiService.generateResponse(nutritionPrompt, userLanguage, []);
 

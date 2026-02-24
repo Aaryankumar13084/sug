@@ -1,12 +1,12 @@
 class GeminiService {
     constructor() {
-        this.apiKey = process.env.OPENROUTER_API_KEY;
-        this.baseURL = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
-        this.model = process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.1-70b-instruct';
-        this.maxTokens = parseInt(process.env.OPENROUTER_MAX_TOKENS || '4096', 10);
+        this.apiKey = process.env.GROQ_API_KEY;
+        this.baseURL = 'https://api.groq.com/openai/v1';
+        this.model = process.env.GROQ_MODEL || 'llama-3.1-70b-versatile';
+        this.maxTokens = parseInt(process.env.GROQ_MAX_TOKENS || '4096', 10);
 
         if (!this.apiKey) {
-            console.warn('OpenRouter API key not configured. AI features will be unavailable.');
+            console.warn('Groq API key not configured. AI features will be unavailable.');
         }
     }
 
@@ -83,8 +83,8 @@ FORMATTING:
     async generateResponse(prompt, language = 'hindi', conversationHistory = []) {
         if (!this.apiKey) {
             return language === 'english'
-                ? 'AI service is not available. Please configure OPENROUTER_API_KEY.'
-                : 'AI सेवा उपलब्ध नहीं है। कृपया OPENROUTER_API_KEY कॉन्फ़िगर करें।';
+                ? 'AI service is not available. Please configure GROQ_API_KEY.'
+                : 'AI सेवा उपलब्ध नहीं है। कृपया GROQ_API_KEY कॉन्फ़िगर करें।';
         }
 
         try {
@@ -125,6 +125,8 @@ FORMATTING:
             // Dynamic import for node-fetch
             const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
+            console.log(`[Groq API] Calling: ${url} with model: ${this.model}`);
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -139,6 +141,8 @@ FORMATTING:
                 })
             });
 
+            console.log(`[Groq API] Response status: ${response.status}`);
+
             // Handle rate limit errors
             if (response.status === 429) {
                 return language === 'english'
@@ -148,7 +152,7 @@ FORMATTING:
 
             // Handle authentication errors
             if (response.status === 401) {
-                console.error('OpenRouter authentication failed');
+                console.error('Groq authentication failed');
                 return language === 'english'
                     ? 'AI service authentication error. Please contact support.'
                     : 'AI सेवा प्रमाणीकरण त्रुटि। कृपया सहायता टीम से संपर्क करें।';
@@ -163,14 +167,19 @@ FORMATTING:
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                console.error('OpenRouter error response:', JSON.stringify(errorData, null, 2));
-                throw new Error(`OpenRouter API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+                console.error('Groq error response:', JSON.stringify(errorData, null, 2));
+                console.error('Full error details:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: errorData
+                });
+                throw new Error(`Groq API error: ${response.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
             }
 
             const data = await response.json();
 
             if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-                throw new Error('Invalid response format from OpenRouter');
+                throw new Error('Invalid response format from Groq');
             }
 
             let responseText = data.choices[0].message.content;
@@ -195,10 +204,16 @@ FORMATTING:
 
             return responseText.trim();
         } catch (error) {
-            console.error('Error generating response from OpenRouter:', error);
+            console.error('❌ Error generating response from Groq:', {
+                message: error.message,
+                stack: error.stack,
+                apiKey: this.apiKey ? '✓ Configured' : '❌ Missing',
+                model: this.model,
+                baseURL: this.baseURL
+            });
             return language === 'english'
-                ? 'Sorry, I could not generate a response. Please try again later.'
-                : 'क्षमा करें, मैं अभी उत्तर नहीं दे सकता। कृपया बाद में पुनः प्रयास करें।';
+                ? `Sorry, I could not generate a response. Error: ${error.message}`
+                : `क्षमा करें, मैं अभी उत्तर नहीं दे सकता। त्रुटि: ${error.message}`;
         }
     }
 
