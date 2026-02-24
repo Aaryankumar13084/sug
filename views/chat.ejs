@@ -1270,6 +1270,138 @@
         // Initialize on load
         loadSessions();
 
+        // Function to display suggestions as horizontal buttons that can be removed
+        const displaySuggestions = (suggestions, language) => {
+            // Remove existing suggestions if any
+            const existingSuggestions = document.getElementById('suggestionsBox');
+            if (existingSuggestions) {
+                existingSuggestions.remove();
+            }
+
+            if (!suggestions || suggestions.length === 0) {
+                console.log('No suggestions to display');
+                return;
+            }
+
+            // Create suggestions container - HORIZONTAL ROW above input (compact, full width)
+            const suggestionsBox = document.createElement('div');
+            suggestionsBox.id = 'suggestionsBox';
+            suggestionsBox.style.cssText = `
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 8px;
+                padding: 8px 12px;
+                margin: 0 0 8px 0;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                position: relative;
+                z-index: 10;
+                width: 100%;
+                box-sizing: border-box;
+            `;
+
+            // Add header (smaller)
+            const header = document.createElement('div');
+            header.style.cssText = `
+                font-size: 10px;
+                color: rgba(255,255,255,0.9);
+                margin-bottom: 6px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            `;
+            header.innerHTML = `<span style="font-size: 12px;">💡</span><span>${language === 'hi' ? 'सुझाव:' : 'Suggestions:'}</span>`;
+            suggestionsBox.appendChild(header);
+
+            // Create HORIZONTAL button container (compact, single row)
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.cssText = `
+                display: flex;
+                flex-wrap: nowrap;
+                gap: 6px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                padding: 2px 0;
+                scrollbar-width: thin;
+                scrollbar-color: rgba(255,255,255,0.3) transparent;
+            `;
+            buttonContainer.style.setProperty('-webkit-overflow-scrolling', 'touch');
+
+            // Add suggestion buttons in SINGLE HORIZONTAL ROW (compact)
+            suggestions.forEach((suggestion, idx) => {
+                const btn = document.createElement('button');
+                btn.className = 'suggestion-btn';
+                btn.type = 'button';
+                btn.style.cssText = `
+                    flex-shrink: 0;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 6px 12px;
+                    background: white;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    border-radius: 15px;
+                    cursor: pointer;
+                    font-size: 11px;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
+                    color: #333;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    line-height: 1.2;
+                `;
+
+                // Button text (shortened for compact display)
+                const shortText = suggestion.length > 35 ? suggestion.substring(0, 35) + '...' : suggestion;
+                btn.textContent = shortText;
+
+                // Hover effects (subtle)
+                btn.onmouseover = () => {
+                    btn.style.background = '#f8f8f8';
+                    btn.style.transform = 'translateY(-1px)';
+                    btn.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+                };
+                btn.onmouseout = () => {
+                    btn.style.background = 'white';
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+                };
+
+                // Click to send suggestion as message
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    console.log('Suggestion clicked - sending:', suggestion);
+                    userInput.value = suggestion;
+                    chatForm.dispatchEvent(new Event('submit'));
+                };
+
+                buttonContainer.appendChild(btn);
+            });
+
+            suggestionsBox.appendChild(buttonContainer);
+
+            // Insert ABOVE chat input - ensure both have same width
+            const chatInputContainer = document.querySelector('.chat-input-wrapper') || chatForm.parentElement;
+
+            if (chatInputContainer && chatForm) {
+                // Force parent container to maintain layout
+                chatInputContainer.style.display = 'flex';
+                chatInputContainer.style.flexDirection = 'column';
+                chatInputContainer.style.width = '100%';
+
+                // Insert suggestions
+                chatInputContainer.insertBefore(suggestionsBox, chatForm);
+
+                // Ensure BOTH suggestions and form have same width
+                chatForm.style.width = '100%';
+                chatForm.style.minWidth = '100%';
+                chatForm.style.flex = '0 0 auto';
+
+                console.log('✅ Suggestions inserted (width fixed)');
+            } else {
+                console.error('⚠️  Could not find chat input container');
+            }
+        };
+
         chatForm.onsubmit = async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
@@ -1310,6 +1442,12 @@
                     })
                 });
                 const data = await response.json();
+                console.log('📦 API Response:', {
+                    hasResponse: !!data.response,
+                    hasSuggestions: !!data.suggestions,
+                    suggestionsCount: data.suggestions?.length || 0,
+                    suggestions: data.suggestions
+                });
                 typingIndicator.style.display = 'none';
 
                 if (data.response && (data.response.includes('Registration complete') || data.response.includes('पंजीकरण पूरा हुआ'))) {
@@ -1320,6 +1458,14 @@
                     ? "क्षमा करें, मैं अभी जवाब नहीं दे पा रही हूँ।"
                     : "Sorry, I cannot respond right now.";
                 addMessage(data.response || errorMsg);
+
+                // Display suggestions if available
+                if (data.suggestions && data.suggestions.length > 0) {
+                    console.log('✅ Displaying', data.suggestions.length, 'suggestions');
+                    displaySuggestions(data.suggestions, languageSelect.value);
+                } else {
+                    console.log('⚠️  No suggestions in response - data.suggestions:', data.suggestions);
+                }
             } catch (err) {
                 typingIndicator.style.display = 'none';
                 const errMsg = languageSelect.value === 'hi'

@@ -93,8 +93,21 @@ app.get('/chat', (req, res) => {
 app.post('/api/chat', async (req, res) => {
     const { message, language, sessionId, chatSessionId } = req.body;
     try {
-        console.log(`Processing web chat: session=${sessionId}, chatSession=${chatSessionId}`);
-        const response = await botService.handleWebMessage(message, language || 'hi', sessionId, chatSessionId);
+        console.log(`\n[API] Processing web chat: session=${sessionId}, chatSession=${chatSessionId}`);
+        const result = await botService.handleWebMessage(message, language || 'hi', sessionId, chatSessionId);
+
+        // Handle both string (old format) and object (new format with suggestions)
+        let response = result;
+        let suggestions = [];
+
+        if (typeof result === 'object' && result.response) {
+            response = result.response;
+            suggestions = result.suggestions || [];
+            console.log(`[API] Got ${suggestions.length} suggestions`);
+        } else {
+            response = result;
+            console.log(`[API] Old format response`);
+        }
 
         // Save to chat session if provided
         if (chatSessionId) {
@@ -104,13 +117,18 @@ app.post('/api/chat', async (req, res) => {
                 session.messages.push({ role: 'user', text: message });
                 session.messages.push({ role: 'model', text: response });
                 await session.save();
-                console.log('Messages saved to session');
+                console.log('[API] Messages saved to session');
             }
         }
 
-        res.json({ response });
+        console.log(`[API] ✅ Returning: response + ${suggestions.length} suggestions`);
+        res.json({
+            response,
+            suggestions: suggestions
+        });
     } catch (error) {
-        console.error('Web Chat Error:', error);
+        console.error('[API] ❌ Web Chat Error:', error);
+        console.error('[API] Error stack:', error.stack);
         res.status(500).json({ error: 'Failed to process message' });
     }
 });
@@ -397,6 +415,30 @@ app.post('/api/test-notification', async (req, res) => {
 });
 
 // Health check endpoint
+// Test endpoint for suggestions
+app.get('/api/test-suggestions', async (req, res) => {
+    try {
+        const message = req.query.message || 'मुझे कब्ज है';
+        const language = req.query.language || 'hindi';
+
+        console.log(`\n🧪 TEST SUGGESTIONS API CALLED`);
+        console.log(`Message: ${message}`);
+        console.log(`Language: ${language}`);
+
+        const suggestions = await botService.suggestionService.getSuggestions([], message, language);
+
+        res.json({
+            message: message,
+            language: language,
+            suggestions: suggestions,
+            count: suggestions.length
+        });
+    } catch (error) {
+        console.error('❌ Test endpoint error:', error);
+        res.status(500).json({ error: error.message, stack: error.stack });
+    }
+});
+
 app.get('/health', (req, res) => {
     res.json({
         status: 'OK',

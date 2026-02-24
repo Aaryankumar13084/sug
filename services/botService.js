@@ -3,6 +3,7 @@ const ChatSession = require('../models/ChatSession');
 const PregnancyService = require('./pregnancyService');
 const KeywordService = require('./keywordService');
 const GeminiService = require('./geminiService');
+const SuggestionService = require('./suggestionService');
 const { calculatePregnancyWeek, isValidDate, parseDate, isValidConceptionDate, calculateDaysSinceConception, getTrimester, getTrimesterText, formatDateForDisplay } = require('../utils/dateUtils');
 const { getAyurvedicRemedies } = require('../data/ayurvedicRemedies');
 const { getAyurvedicRemediesEnglish } = require('../data/ayurvedicRemedies-english');
@@ -15,27 +16,33 @@ class BotService {
         this.pregnancyService = new PregnancyService();
         this.keywordService = new KeywordService();
         this.geminiService = new GeminiService();
+        this.suggestionService = new SuggestionService();
         this.userStates = new Map(); // Track user conversation states
         this.webSessions = new Map(); // Track web chat conversation history
     }
 
     async handleWebMessage(message, language, sessionId, chatSessionId) {
+        console.log(`\n[handleWebMessage] START - msg:"${message.substring(0, 30)}", lang:${language}, sessionId:${sessionId}`);
         try {
             // Map short language codes to full names used by services
             const langFull = language === 'en' ? 'english' : 'hindi';
+            console.log(`[handleWebMessage] langFull: ${langFull}`);
 
             // Check if user is in registration flow
             const userState = this.userStates.get(sessionId);
             if (userState) {
                 if (userState.state === 'awaiting_consent') {
                     if (message.toLowerCase().includes('yes') || message.includes('हाँ') || message.includes('agree')) {
-                        return await this.requestWebDueDate(sessionId, langFull);
+                        const response = await this.requestWebDueDate(sessionId, langFull);
+                        return { response, suggestions: [] };
                     } else {
-                        return langFull === 'english' ? 'Registration cancelled. Type "start" to try again.' : 'पंजीकरण रद्द कर दिया गया। फिर से शुरू करने के लिए "शुरू" लिखें।';
+                        const response = langFull === 'english' ? 'Registration cancelled. Type "start" to try again.' : 'पंजीकरण रद्द कर दिया गया। फिर से शुरू करने के लिए "शुरू" लिखें।';
+                        return { response, suggestions: [] };
                     }
                 }
                 if (userState.state === 'awaiting_due_date') {
-                    return await this.handleWebDueDateInput(sessionId, message, langFull);
+                    const response = await this.handleWebDueDateInput(sessionId, message, langFull);
+                    return { response, suggestions: [] };
                 }
             }
 
@@ -47,14 +54,8 @@ class BotService {
                 console.error('Error checking user session:', e);
             }
 
-            // If user is registered, show welcome message
-            if (existingUser) {
-                return langFull === 'english'
-                    ? `Welcome back, ${existingUser.firstName}! How can I assist you with your pregnancy today?`
-                    : `वापसी पर स्वागत है, ${existingUser.firstName}! आज मैं आपकी गर्भावस्था में कैसे सहायता कर सकती हूँ?`;
-            }
-
             // If not registered, show registration form directly (no keywords needed)
+            if (!existingUser) {
             const formHtml = `
 <div class="reg-form-container">
     <h4>${langFull === 'english' ? 'Complete Registration' : 'पंजीकरण पूर्ण करें'}</h4>
@@ -123,11 +124,11 @@ class BotService {
     </form>
 </div>
 `;
-            return formHtml;
+                return { response: formHtml, suggestions: [] };
+            }
 
-            // Simple keyword check first
-            const keywordResponse = await this.keywordService.getResponse(message, langFull);
-            if (keywordResponse) return keywordResponse;
+            // For web chat, SKIP keyword matching - always use AI for better responses
+            console.log(`[handleWebMessage] ℹ️  Skipping keyword service - using AI for web chat`);
 
             // Get conversation history from the specific ChatSession
             let sessionDoc = null;
@@ -202,13 +203,36 @@ Please reference the user's current pregnancy stage in your response when releva
             // Generate AI response with conversation history and pregnancy context
             const aiResponse = await this.geminiService.generateResponse(fullMessage, langFull, history);
 
+            // Generate smart suggestions based on session history
+            console.log(`\n[Web Chat] 🔍 GENERATING SUGGESTIONS`);
+            console.log(`[Web Chat] Message: "${message.substring(0, 50)}..."`);
+            console.log(`[Web Chat] Language: ${langFull}`);
+            console.log(`[Web Chat] History entries: ${history.length}`);
+
+            if (history.length > 0) {
+                console.log(`[Web Chat] History content:`, history.map(h => ({
+                    q: h.question?.substring(0, 30),
+                    a: h.answer?.substring(0, 30)
+                })));
+            }
+
+            const suggestions = await this.suggestionService.getSuggestions(
+                history,
+                message,
+                langFull
+            );
+            console.log(`[Web Chat] ✅ Got ${suggestions.length} suggestions`);
+            suggestions.forEach((sug, idx) => {
+                console.log(`[Web Chat]   ${idx + 1}. ${sug.substring(0, 60)}...`);
+            });
+
             // Save to DB session history
             if (chatSessionId && sessionDoc) {
                 try {
                     // Save user message
                     sessionDoc.messages.push({ role: 'user', text: message });
                     // Save model response
-                    sessionDoc.messages.push({ role: 'model', text: aiResponse });
+                    sessionDoc.messages.push({ role: 'model', text: aiResponse }); // Save original response
                     await sessionDoc.save();
                 } catch (dbError) {
                     console.error('Error saving messages to ChatSession:', dbError);
@@ -220,10 +244,19 @@ Please reference the user's current pregnancy stage in your response when releva
                 this.webSessions.set(sessionId, history);
             }
 
-            return aiResponse;
+            // Return response with suggestions as separate object
+            const result = {
+                response: aiResponse,
+                suggestions: suggestions && suggestions.length > 0 ? suggestions : []
+            };
+            console.log(`[handleWebMessage] ✅ RETURNING - suggestions: ${result.suggestions.length}`);
+            return result;
         } catch (error) {
-            console.error('Web Message Error:', error);
-            return language === 'hi' ? 'क्षमा करें, मैं अभी जवाब नहीं दे सकता।' : 'Sorry, I cannot respond right now.';
+            console.error('❌ [handleWebMessage] Error:', error);
+            console.error('Error stack:', error.stack);
+            const errorResponse = language === 'hi' ? 'क्षमा करें, मैं अभी जवाब नहीं दे सकता।' : 'Sorry, I cannot respond right now.';
+            console.log(`[handleWebMessage] ❌ RETURNING error response`);
+            return { response: errorResponse, suggestions: [] };
         }
     }
 
@@ -1124,24 +1157,62 @@ Please reference the user's current pregnancy stage in your response when releva
 
             await user.save();
 
+            // Generate smart suggestions based on session history
+            console.log(`\n[Telegram] 🔍 GENERATING SUGGESTIONS`);
+            console.log(`[Telegram] User: ${user.firstName}, Language: ${user.language}`);
+            console.log(`[Telegram] Message: "${text.substring(0, 50)}..."`);
+            console.log(`[Telegram] History entries: ${user.conversationHistory.length}`);
+
+            const suggestions = await this.suggestionService.getSuggestions(
+                user.conversationHistory,
+                text,
+                user.language
+            );
+
+            console.log(`[Telegram] ✅ Got ${suggestions.length} suggestions`);
+            suggestions.forEach((sug, idx) => {
+                console.log(`[Telegram]   ${idx + 1}. ${sug.substring(0, 60)}...`);
+            });
+
             // Send the AI-generated response with feedback buttons
             const formattedResponse = user.language === 'english'
                 ? `🤖 AI Assistant:\n\n${response}`
                 : `🤖 AI सहायक:\n\n${response}`;
 
+            // Build keyboard with feedback buttons + suggestions
+            const keyboardRows = [];
+
+            // Add feedback buttons
+            keyboardRows.push(
+                user.language === 'english'
+                    ? [
+                        { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
+                        { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
+                    ]
+                    : [
+                        { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                        { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                    ]
+            );
+
+            // Add suggestion buttons if available
+            if (suggestions && suggestions.length > 0) {
+                console.log(`[Telegram] 📌 Adding ${suggestions.length} suggestion buttons`);
+                suggestions.forEach(suggestion => {
+                    keyboardRows.push([
+                        {
+                            text: suggestion.substring(0, 50) + (suggestion.length > 50 ? '...' : ''),
+                            callback_data: `suggestion_${Buffer.from(suggestion).toString('base64').substring(0, 50)}`
+                        }
+                    ]);
+                });
+            } else {
+                console.log(`[Telegram] ⚠️  No suggestions to add`);
+            }
+
             const options = {
                 reply_markup: {
-                    inline_keyboard: [
-                        user.language === 'english'
-                            ? [
-                                { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
-                                { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
-                            ]
-                            : [
-                                { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
-                                { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
-                            ]
-                    ]
+                    inline_keyboard: keyboardRows
                 },
                 parse_mode: 'HTML'
             };
@@ -1149,7 +1220,8 @@ Please reference the user's current pregnancy stage in your response when releva
             await this.bot.sendMessage(chatId, formattedResponse, options);
 
         } catch (error) {
-            console.error('Error in handleAutomaticAIResponse:', error);
+            console.error('❌ Error in handleAutomaticAIResponse:', error);
+            console.error('Error stack:', error.stack);
 
             // Fallback to keyword-based response if AI fails
             await this.handleKeywordQuery(chatId, text);

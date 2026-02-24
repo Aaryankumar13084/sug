@@ -125,7 +125,9 @@ FORMATTING:
             // Dynamic import for node-fetch
             const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
-            console.log(`[Groq API] Calling: ${url} with model: ${this.model}`);
+            console.log(`\n[Groq API] 📞 Calling: ${url}`);
+            console.log(`[Groq API] Model: ${this.model}`);
+            console.log(`[Groq API] Messages:`, messages.length, 'messages');
 
             const response = await fetch(url, {
                 method: 'POST',
@@ -166,14 +168,15 @@ FORMATTING:
             }
 
             if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error('Groq error response:', JSON.stringify(errorData, null, 2));
-                console.error('Full error details:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    error: errorData
-                });
-                throw new Error(`Groq API error: ${response.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
+                const errorText = await response.text();
+                console.error(`❌ [Groq API] Error ${response.status}:`);
+                console.error(`[Groq API] Response:`, errorText.substring(0, 500));
+                try {
+                    const errorData = JSON.parse(errorText);
+                    throw new Error(`Groq API error: ${response.status} - ${errorData.error?.message || JSON.stringify(errorData)}`);
+                } catch (e) {
+                    throw new Error(`Groq API error: ${response.status} - ${errorText.substring(0, 100)}`);
+                }
             }
 
             const data = await response.json();
