@@ -39,22 +39,23 @@ class BotService {
                 }
             }
 
-            // Start registration if keywords detected
-            const startKeywords = ['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू', 'register', 'पंजीकरण', 'registration', 'panjikaran', 'panjikarn', 'shuru'];
-            if (startKeywords.includes(message.toLowerCase())) {
-                // Check if user is already registered in this session
-                try {
-                    const existingUser = await User.findOne({ sessionId: sessionId });
-                    if (existingUser) {
-                        return langFull === 'english'
-                            ? `Welcome back, ${existingUser.firstName}! How can I assist you with your pregnancy today?`
-                            : `वापसी पर स्वागत है, ${existingUser.firstName}! आज मैं आपकी गर्भावस्था में कैसे सहायता कर सकती हूँ?`;
-                    }
-                } catch (e) {
-                    console.error('Error checking user session:', e);
-                }
+            // Check if user is already registered in this session
+            let existingUser = null;
+            try {
+                existingUser = await User.findOne({ sessionId: sessionId, consentGiven: true });
+            } catch (e) {
+                console.error('Error checking user session:', e);
+            }
 
-                const formHtml = `
+            // If user is registered, show welcome message
+            if (existingUser) {
+                return langFull === 'english'
+                    ? `Welcome back, ${existingUser.firstName}! How can I assist you with your pregnancy today?`
+                    : `वापसी पर स्वागत है, ${existingUser.firstName}! आज मैं आपकी गर्भावस्था में कैसे सहायता कर सकती हूँ?`;
+            }
+
+            // If not registered, show registration form directly (no keywords needed)
+            const formHtml = `
 <div class="reg-form-container">
     <h4>${langFull === 'english' ? 'Complete Registration' : 'पंजीकरण पूर्ण करें'}</h4>
     <form onsubmit="submitRegistrationForm(event)">
@@ -122,8 +123,7 @@ class BotService {
     </form>
 </div>
 `;
-                return formHtml;
-            }
+            return formHtml;
 
             // Simple keyword check first
             const keywordResponse = await this.keywordService.getResponse(message, langFull);
@@ -527,14 +527,8 @@ Or type /help for more information.`;
             if (user && user.consentGiven) {
                 await this.handleAutomaticAIResponse(chatId, text, user);
             } else if (!user) {
-                // For completely unregistered users, check if they sent a start keyword
-                const startKeywords = ['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू', 'register', 'पंजीकरण', 'registration', 'panjikaran', 'panjikarn', 'shuru'];
-                if (startKeywords.includes(text.toLowerCase().trim())) {
-                    await this.handleStart(msg);
-                } else {
-                    // Handle keyword-based queries for unregistered users
-                    await this.handleKeywordQuery(chatId, text);
-                }
+                // For completely unregistered users, show registration flow directly
+                await this.handleStart(msg);
             }
             // If user exists but consent is not given, they are in registration flow - let other handlers deal with it
 
