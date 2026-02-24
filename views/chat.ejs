@@ -1103,6 +1103,49 @@
                             </p>
                         </div>
                     `;
+
+                    // Add messages to chat - one at a time with Next button
+                    if (result.messages && Array.isArray(result.messages)) {
+                        let currentMessageIndex = 0;
+
+                        function showNextMessage() {
+                            if (currentMessageIndex < result.messages.length) {
+                                const msg = result.messages[currentMessageIndex];
+                                addMessage(msg.content, false);
+                                currentMessageIndex++;
+
+                                // Add Next button if there are more messages
+                                if (currentMessageIndex < result.messages.length) {
+                                    setTimeout(() => addNextButton(), 300);
+                                }
+                            }
+                        }
+
+                        function addNextButton() {
+                            if (welcomeCard) welcomeCard.style.display = 'none';
+
+                            const div = document.createElement('div');
+                            div.className = 'message bot-message';
+                            div.innerHTML = `
+                                <button style="padding: 10px 20px; background: var(--primary-pink); color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: 500; margin-top: 10px;">
+                                    ${languageSelect.value === 'hi' ? 'अगला →' : 'Next →'}
+                                </button>
+                            `;
+
+                            const btn = div.querySelector('button');
+                            btn.onclick = () => {
+                                div.remove();
+                                showNextMessage();
+                            };
+
+                            chatBox.appendChild(div);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+
+                        // Show first message immediately
+                        showNextMessage();
+                    }
+
                     registerPush();
                 } else {
                     const errorMsg = result.error ||

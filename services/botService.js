@@ -3,7 +3,11 @@ const ChatSession = require('../models/ChatSession');
 const PregnancyService = require('./pregnancyService');
 const KeywordService = require('./keywordService');
 const GeminiService = require('./geminiService');
-const { calculatePregnancyWeek, isValidDate, parseDate, isValidConceptionDate } = require('../utils/dateUtils');
+const { calculatePregnancyWeek, isValidDate, parseDate, isValidConceptionDate, calculateDaysSinceConception, getTrimester, getTrimesterText, formatDateForDisplay } = require('../utils/dateUtils');
+const { getAyurvedicRemedies } = require('../data/ayurvedicRemedies');
+const { getAyurvedicRemediesEnglish } = require('../data/ayurvedicRemedies-english');
+const { getNutritionChart } = require('../data/nutritionChart');
+const { getNutritionChartEnglish } = require('../data/nutritionChart-english');
 
 class BotService {
     constructor(bot) {
@@ -518,10 +522,12 @@ Or type /help for more information.`;
 
             // Handle automatic AI response for registered users
             const user = await User.findOne({ telegramId: chatId.toString() });
+
+            // If user is already registered, always handle as AI response (even if they send /start again)
             if (user && user.consentGiven) {
                 await this.handleAutomaticAIResponse(chatId, text, user);
-            } else {
-                // For unregistered users, check if they sent a start keyword
+            } else if (!user) {
+                // For completely unregistered users, check if they sent a start keyword
                 const startKeywords = ['start', 'hi', 'hello', 'namaste', 'नमस्ते', 'शुरू', 'register', 'पंजीकरण', 'registration', 'panjikaran', 'panjikarn', 'shuru'];
                 if (startKeywords.includes(text.toLowerCase().trim())) {
                     await this.handleStart(msg);
@@ -530,6 +536,7 @@ Or type /help for more information.`;
                     await this.handleKeywordQuery(chatId, text);
                 }
             }
+            // If user exists but consent is not given, they are in registration flow - let other handlers deal with it
 
         } catch (error) {
             console.error('Error in handleMessage:', error);
@@ -800,10 +807,209 @@ Stay healthy! 🤱`;
 स्वस्थ रहें! 🤱`;
         }
 
-        await this.bot.sendMessage(chatId, message);
+        try {
+            await this.bot.sendMessage(chatId, message);
 
-        // Send current week info immediately
-        await this.pregnancyService.sendCurrentWeekInfo(this.bot, chatId);
+            // Helper function to delay execution
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            // Send Ayurvedic remedies (with 2-second delay)
+            await delay(2000);
+            try {
+                const user = await User.findOne({ telegramId: chatId.toString() });
+                if (user) {
+                    const currentWeek = calculatePregnancyWeek(user.dueDate);
+                    const userLanguage = user.language || 'hindi';
+
+                    // Generate Ayurvedic remedies using AI
+                    const ayurvedicPrompt = userLanguage === 'english'
+                        ? `You are a pregnancy health expert. Provide Ayurvedic remedies and guidance specifically for week ${currentWeek} of pregnancy. Format concisely:\n🌿 <b>Ayurvedic Remedies for Week ${currentWeek}</b>\n\n<b>General Guidance:</b>\n[2-3 bullet points]\n\n<b>Remedies & Practices:</b>\n[2-3 bullet points]\n\n<b>Beneficial Herbs:</b>\n[2-3 bullet points]\n\n<b>⚠️ Things to Avoid:</b>\n[2-3 bullet points]\n\n<b>📋 Disclaimer:</b> Consult your doctor before trying any remedies.`
+                        : `आप गर्भावस्था स्वास्थ्य विशेषज्ञ हैं। सप्ताह ${currentWeek} के लिए आयुर्वेदिक उपचार प्रदान करें। संक्षिप्त रखें:\n🌿 <b>सप्ताह ${currentWeek} के आयुर्वेदिक उपाय</b>\n\n<b>सामान्य मार्गदर्शन:</b>\n[2-3 बुलेट]\n\n<b>उपचार:</b>\n[2-3 बुलेट]\n\n<b>जड़ी-बूटियां:</b>\n[2-3 बुलेट]\n\n<b>⚠️ बचें:</b>\n[2-3 बुलेट]\n\n<b>📋 अस्वीकरण:</b> डॉक्टर से सलाह लें।`;
+
+                    const ayurvedicMessage = await this.geminiService.generateResponse(ayurvedicPrompt, userLanguage, []);
+
+                    const options = {
+                        reply_markup: {
+                            inline_keyboard: [
+                                user.language === 'english'
+                                    ? [
+                                        { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
+                                        { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
+                                    ]
+                                    : [
+                                        { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                        { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                                    ]
+                            ]
+                        },
+                        parse_mode: 'HTML'
+                    };
+                    await this.bot.sendMessage(chatId, ayurvedicMessage, options);
+                    console.log(`Sent AI-generated Ayurvedic remedies to user ${chatId} (week ${currentWeek})`);
+                }
+            } catch (error) {
+                console.error('Error sending Ayurvedic remedies:', error);
+            }
+
+            // Send nutrition chart (with 4-second total delay)
+            await delay(2000);
+            try {
+                const user = await User.findOne({ telegramId: chatId.toString() });
+                if (user) {
+                    const currentWeek = calculatePregnancyWeek(user.dueDate);
+                    const userLanguage = user.language || 'hindi';
+
+                    // Generate Nutrition chart using AI
+                    const nutritionPrompt = userLanguage === 'english'
+                        ? `You are a pregnancy nutrition expert. Provide a nutrition guide for week ${currentWeek} of pregnancy. Format concisely:\n🥗 <b>Nutrition Chart for Week ${currentWeek}</b>\n\n<b>Daily Calorie Needs:</b>\n[brief info]\n\n<b>Protein Sources:</b>\n[2-3 bullet points]\n\n<b>Vegetables:</b>\n[2-3 bullet points]\n\n<b>Fruits:</b>\n[2-3 bullet points]\n\n<b>Healthy Grains:</b>\n[2-3 bullet points]\n\n<b>Supplements:</b>\n[2-3 bullet points]\n\n<b>Hydration:</b>\n[brief info]\n\n<b>Sample Meal Plan:</b>\n🍳 <b>Breakfast:</b> [quick suggestion]\n🍲 <b>Lunch:</b> [quick suggestion]\n🥘 <b>Dinner:</b> [quick suggestion]\n\n<b>📋 Disclaimer:</b> General guidance only. Follow your doctor's advice.`
+                        : `आप गर्भावस्था पोषण विशेषज्ञ हैं। सप्ताह ${currentWeek} के लिए पोषण गाइड दें। संक्षिप्त रखें:\n🥗 <b>सप्ताह ${currentWeek} पोषण चार्ट</b>\n\n<b>दैनिक कैलोरी:</b>\n[संक्षिप्त]\n\n<b>प्रोटीन:</b>\n[2-3 बुलेट]\n\n<b>सब्जियां:</b>\n[2-3 बुलेट]\n\n<b>फल:</b>\n[2-3 बुलेट]\n\n<b>अनाज:</b>\n[2-3 बुलेट]\n\n<b>पूरक:</b>\n[2-3 बुलेट]\n\n<b>तरल:</b>\n[संक्षिप्त]\n\n<b>नमूना भोजन:</b>\n🍳 <b>नाश्ता:</b> [सुझाव]\n🍲 <b>दोपहर:</b> [सुझाव]\n🥘 <b>रात:</b> [सुझाव]\n\n<b>📋 अस्वीकरण:</b> सामान्य मार्गदर्शन। डॉक्टर की सलाह लें।`;
+
+                    const nutritionMessage = await this.geminiService.generateResponse(nutritionPrompt, userLanguage, []);
+
+                    const options = {
+                        reply_markup: {
+                            inline_keyboard: [
+                                user.language === 'english'
+                                    ? [
+                                        { text: 'Yes, helpful ✅', callback_data: 'feedback_yes' },
+                                        { text: 'No, not helpful ❌', callback_data: 'feedback_no' }
+                                    ]
+                                    : [
+                                        { text: 'हाँ, उपयोगी था ✅', callback_data: 'feedback_yes' },
+                                        { text: 'नहीं, उपयोगी नहीं था ❌', callback_data: 'feedback_no' }
+                                    ]
+                            ]
+                        },
+                        parse_mode: 'HTML'
+                    };
+                    await this.bot.sendMessage(chatId, nutritionMessage, options);
+                    console.log(`Sent AI-generated nutrition chart to user ${chatId} (week ${currentWeek})`);
+                }
+            } catch (error) {
+                console.error('Error sending nutrition chart:', error);
+            }
+
+            // Send current week info (with 2-second more delay)
+            await delay(2000);
+            try {
+                await this.pregnancyService.sendCurrentWeekInfo(this.bot, chatId);
+                console.log(`Sent current week info to user ${chatId}`);
+            } catch (error) {
+                console.error('Error sending current week info:', error);
+            }
+        } catch (error) {
+            console.error('Error in completeRegistration:', error);
+        }
+    }
+
+    formatAyurvedicMessage(week, content, language = 'hindi') {
+        if (language === 'english') {
+            return `🌿 <b>Ayurvedic Remedies for Week ${week}</b>
+
+<b>General Guidance:</b>
+${content.generalGuidance.map(item => `• ${item}`).join('\n')}
+
+<b>Remedies & Practices:</b>
+${content.remedies.map(item => `• ${item}`).join('\n')}
+
+<b>Beneficial Herbs:</b>
+${content.herbs.map(item => `• ${item}`).join('\n')}
+
+<b>⚠️ Things to Avoid:</b>
+${content.avoid.map(item => `• ${item}`).join('\n')}
+
+<b>📋 Important Disclaimer:</b> Please consult your doctor before starting any new remedies or herbs. This information is for educational purposes only.
+
+Was this information helpful?`;
+        } else {
+            return `🌿 <b>सप्ताह ${week} के लिए आयुर्वेदिक उपाय</b>
+
+<b>सामान्य मार्गदर्शन:</b>
+${content.generalGuidance.map(item => `• ${item}`).join('\n')}
+
+<b>उपचार और प्रथाएं:</b>
+${content.remedies.map(item => `• ${item}`).join('\n')}
+
+<b>लाभकारी जड़ी-बूटियां:</b>
+${content.herbs.map(item => `• ${item}`).join('\n')}
+
+<b>⚠️ बचने योग्य चीजें:</b>
+${content.avoid.map(item => `• ${item}`).join('\n')}
+
+<b>📋 महत्वपूर्ण अस्वीकरण:</b> कोई भी नया उपचार या जड़ी-बूटी शुरू करने से पहले कृपया अपने डॉक्टर से सलाह लें। यह जानकारी केवल शैक्षणिक उद्देश्यों के लिए है।
+
+क्या यह जानकारी उपयोगी थी?`;
+        }
+    }
+
+    formatNutritionMessage(week, content, language = 'hindi') {
+        if (language === 'english') {
+            return `🥗 <b>Nutrition Chart for Week ${week}</b>
+
+<b>Daily Calorie Needs:</b>
+${content.calorieNeeds}
+
+<b>Protein Sources:</b>
+${content.proteinSources.map(item => `• ${item}`).join('\n')}
+
+<b>Vegetables to Include:</b>
+${content.vegetables.map(item => `• ${item}`).join('\n')}
+
+<b>Fruits to Include:</b>
+${content.fruits.map(item => `• ${item}`).join('\n')}
+
+<b>Healthy Grains:</b>
+${content.grains.map(item => `• ${item}`).join('\n')}
+
+<b>Important Supplements:</b>
+${content.supplements.map(item => `• ${item}`).join('\n')}
+
+<b>Hydration:</b>
+${content.hydration}
+
+<b>Sample Meal Plan:</b>
+🍳 <b>Breakfast:</b> ${content.mealPlan.breakfast}
+🍲 <b>Lunch:</b> ${content.mealPlan.lunch}
+🥘 <b>Dinner:</b> ${content.mealPlan.dinner}
+🥤 <b>Snacks:</b> ${content.mealPlan.snacks}
+
+<b>📋 Disclaimer:</b> This is general guidance. Please follow your doctor's specific recommendations. Every pregnancy is unique.
+
+Was this information helpful?`;
+        } else {
+            return `🥗 <b>सप्ताह ${week} के लिए पोषण चार्ट</b>
+
+<b>दैनिक कैलोरी आवश्यकता:</b>
+${content.calorieNeeds}
+
+<b>प्रोटीन के स्रोत:</b>
+${content.proteinSources.map(item => `• ${item}`).join('\n')}
+
+<b>शामिल करने योग्य सब्जियां:</b>
+${content.vegetables.map(item => `• ${item}`).join('\n')}
+
+<b>शामिल करने योग्य फल:</b>
+${content.fruits.map(item => `• ${item}`).join('\n')}
+
+<b>स्वस्थ अनाज:</b>
+${content.grains.map(item => `• ${item}`).join('\n')}
+
+<b>महत्वपूर्ण पूरक:</b>
+${content.supplements.map(item => `• ${item}`).join('\n')}
+
+<b>हाइड्रेशन:</b>
+${content.hydration}
+
+<b>नमूना भोजन योजना:</b>
+🍳 <b>नाश्ता:</b> ${content.mealPlan.breakfast}
+🍲 <b>दोपहर का भोजन:</b> ${content.mealPlan.lunch}
+🥘 <b>रात का भोजन:</b> ${content.mealPlan.dinner}
+🥤 <b>स्नैक्स:</b> ${content.mealPlan.snacks}
+
+<b>📋 अस्वीकरण:</b> यह सामान्य मार्गदर्शन है। कृपया अपने डॉक्टर की विशिष्ट सिफारिशों का पालन करें। हर गर्भावस्था अद्वितीय है।
+
+क्या यह जानकारी उपयोगी थी?`;
+        }
     }
 
     async handleAutomaticAIResponse(chatId, text, user) {
@@ -828,11 +1034,31 @@ Stay healthy! 🤱`;
                 });
             }
 
-            // Add user's pregnancy week context
+            // Add comprehensive user's pregnancy context
             const currentWeek = calculatePregnancyWeek(user.dueDate);
+            const daysSinceConception = calculateDaysSinceConception(user.dueDate);
+            const trimester = getTrimester(currentWeek);
+            const trimesterText = getTrimesterText(currentWeek, user.language);
+            const conceptionDateFormatted = formatDateForDisplay(new Date(user.dueDate), user.language);
+            const todayFormatted = formatDateForDisplay(new Date(), user.language);
+
             const pregnancyContext = user.language === 'english'
-                ? `\n\nCurrent pregnancy context: The user is in week ${currentWeek} of pregnancy.`
-                : `\n\nवर्तमान गर्भावस्था संदर्भ: उपयोगकर्ता गर्भावस्था के ${currentWeek}वें सप्ताह में है।`;
+                ? `\n\nComprehensive Pregnancy Information:
+- Conception Date: ${conceptionDateFormatted}
+- Current Date: ${todayFormatted}
+- Days Since Conception: ${daysSinceConception} days
+- Current Week: Week ${currentWeek} of 42
+- Trimester: ${trimesterText}
+
+Please reference the user's current pregnancy stage in your response when relevant.`
+                : `\n\nव्यापक गर्भावस्था जानकारी:
+- गर्भधारण की तिथि: ${conceptionDateFormatted}
+- आज की तिथि: ${todayFormatted}
+- गर्भधारण से दिन: ${daysSinceConception} दिन
+- वर्तमान सप्ताह: 42 में से ${currentWeek}वां सप्ताह
+- तिमाही: ${trimesterText}
+
+कृपया जब प्रासंगिक हो तो अपने उत्तर में उपयोगकर्ता की वर्तमान गर्भावस्था अवस्था का संदर्भ दें।`;
 
             // Add desi nuskhe and short-answer instructions
             const responseStyleContext = user.language === 'english'

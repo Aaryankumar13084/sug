@@ -10,7 +10,8 @@ const BotService = require('./services/botService');
 const PregnancyService = require('./services/pregnancyService');
 const User = require('./models/User');
 const ChatSession = require('./models/ChatSession');
-const { parseDate, isValidDate, isValidConceptionDate } = require('./utils/dateUtils');
+const { parseDate, isValidDate, isValidConceptionDate, calculatePregnancyWeek } = require('./utils/dateUtils');
+const GeminiService = require('./services/geminiService');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,6 +37,7 @@ if (!BOT_TOKEN) {
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const botService = new BotService(bot);
 const pregnancyService = new PregnancyService();
+const geminiService = new GeminiService();
 
 // Connect to MongoDB
 connectDB();
@@ -241,7 +243,140 @@ app.post('/api/register', async (req, res) => {
             { upsert: true, new: true, runValidators: true }
         );
 
-        res.json({ message: 'Registration successful!', user });
+        const currentWeek = calculatePregnancyWeek(user.dueDate);
+        const userLanguage = user.language || 'hindi';
+
+        // Build welcome message
+        let welcomeMsg;
+        if (userLanguage === 'english') {
+            welcomeMsg = `🎉 Registration complete!\n\nYou will now receive weekly pregnancy information.\n\nYou can ask me about any of these topics anytime:\n• Constipation\n• Vaccination\n• Diet\n• Anxiety\n• Exercise\n• Headache\n• Vomiting\n\nStay healthy! 🤱`;
+        } else {
+            welcomeMsg = `🎉 पंजीकरण पूरा हुआ!\n\nअब आपको हर सप्ताह गर्भावस्था की जानकारी मिलेगी।\n\nआप कभी भी निम्न सवाल पूछ सकती हैं:\n• कब्ज\n• टीकाकरण\n• आहार\n• चिंता\n• व्यायाम\n• सिरदर्द\n• उल्टी\n\nस्वस्थ रहें! 🤱`;
+        }
+
+        // Generate Ayurvedic remedies using AI
+        const ayurvedicPrompt = userLanguage === 'english'
+            ? `You are a pregnancy health expert. Provide Ayurvedic remedies and guidance specifically for week ${currentWeek} of pregnancy. Format as:
+🌿 <b>Ayurvedic Remedies for Week ${currentWeek}</b>
+
+<b>General Guidance:</b>
+[bullet points]
+
+<b>Remedies & Practices:</b>
+[bullet points]
+
+<b>Beneficial Herbs:</b>
+[bullet points with doctor consultation note]
+
+<b>⚠️ Things to Avoid:</b>
+[bullet points]
+
+<b>📋 Important Disclaimer:</b> Please consult your doctor before starting any new remedies or herbs. This information is for educational purposes only.
+
+Keep it concise and practical for week ${currentWeek}.`
+            : `आप एक गर्भावस्था स्वास्थ्य विशेषज्ञ हैं। गर्भावस्था के सप्ताह ${currentWeek} के लिए विशेष रूप से आयुर्वेदिक उपचार और मार्गदर्शन प्रदान करें। इस प्रारूप में:
+🌿 <b>सप्ताह ${currentWeek} के लिए आयुर्वेदिक उपाय</b>
+
+<b>सामान्य मार्गदर्शन:</b>
+[बुलेट पॉइंट्स]
+
+<b>उपचार और प्रथाएं:</b>
+[बुलेट पॉइंट्स]
+
+<b>लाभकारी जड़ी-बूटियां:</b>
+[डॉक्टर परामर्श नोट के साथ बुलेट पॉइंट्स]
+
+<b>⚠️ बचने योग्य चीजें:</b>
+[बुलेट पॉइंट्स]
+
+<b>📋 महत्वपूर्ण अस्वीकरण:</b> कोई भी नया उपचार या जड़ी-बूटी शुरू करने से पहले कृपया अपने डॉक्टर से सलाह लें। यह जानकारी केवल शैक्षणिक उद्देश्यों के लिए है।
+
+सप्ताह ${currentWeek} के लिए संक्षिप्त और व्यावहारिक रखें।`;
+
+        const ayurvedicMsg = await geminiService.generateResponse(ayurvedicPrompt, userLanguage, []);
+
+        // Generate Nutrition chart using AI
+        const nutritionPrompt = userLanguage === 'english'
+            ? `You are a pregnancy nutrition expert. Provide a complete nutrition guide for week ${currentWeek} of pregnancy. Format as:
+🥗 <b>Nutrition Chart for Week ${currentWeek}</b>
+
+<b>Daily Calorie Needs:</b>
+[calorie requirement]
+
+<b>Protein Sources:</b>
+[bullet points]
+
+<b>Vegetables to Include:</b>
+[bullet points]
+
+<b>Fruits to Include:</b>
+[bullet points]
+
+<b>Healthy Grains:</b>
+[bullet points]
+
+<b>Important Supplements:</b>
+[bullet points]
+
+<b>Hydration:</b>
+[hydration needs]
+
+<b>Sample Meal Plan:</b>
+🍳 <b>Breakfast:</b> [suggestion]
+🍲 <b>Lunch:</b> [suggestion]
+🥘 <b>Dinner:</b> [suggestion]
+🥤 <b>Snacks:</b> [suggestion]
+
+<b>📋 Disclaimer:</b> This is general guidance. Please follow your doctor's specific recommendations. Every pregnancy is unique.
+
+Make it practical and specific for week ${currentWeek}.`
+            : `आप एक गर्भावस्था पोषण विशेषज्ञ हैं। गर्भावस्था के सप्ताह ${currentWeek} के लिए एक संपूर्ण पोषण गाइड प्रदान करें। इस प्रारूप में:
+🥗 <b>सप्ताह ${currentWeek} के लिए पोषण चार्ट</b>
+
+<b>दैनिक कैलोरी आवश्यकता:</b>
+[कैलोरी आवश्यकता]
+
+<b>प्रोटीन के स्रोत:</b>
+[बुलेट पॉइंट्स]
+
+<b>शामिल करने योग्य सब्जियां:</b>
+[बुलेट पॉइंट्स]
+
+<b>शामिल करने योग्य फल:</b>
+[बुलेट पॉइंट्स]
+
+<b>स्वस्थ अनाज:</b>
+[बुलेट पॉइंट्स]
+
+<b>महत्वपूर्ण पूरक:</b>
+[बुलेट पॉइंट्स]
+
+<b>हाइड्रेशन:</b>
+[हाइड्रेशन की आवश्यकता]
+
+<b>नमूना भोजन योजना:</b>
+🍳 <b>नाश्ता:</b> [सुझाव]
+🍲 <b>दोपहर का भोजन:</b> [सुझाव]
+🥘 <b>रात का भोजन:</b> [सुझाव]
+🥤 <b>स्नैक्स:</b> [सुझाव]
+
+<b>📋 अस्वीकरण:</b> यह सामान्य मार्गदर्शन है। कृपया अपने डॉक्टर की विशिष्ट सिफारिशों का पालन करें। हर गर्भावस्था अद्वितीय है।
+
+सप्ताह ${currentWeek} के लिए व्यावहारिक और विशिष्ट बनाएं।`;
+
+        const nutritionMsg = await geminiService.generateResponse(nutritionPrompt, userLanguage, []);
+
+        // Return messages - frontend will show them one by one
+        res.json({
+            message: 'Registration successful!',
+            user,
+            messages: [
+                { type: 'welcome', content: welcomeMsg },
+                { type: 'ayurvedic', content: ayurvedicMsg },
+                { type: 'nutrition', content: nutritionMsg }
+            ],
+            currentWeek
+        });
     } catch (error) {
         console.error('Registration API Error:', error);
         res.status(500).json({ error: 'Failed to register' });

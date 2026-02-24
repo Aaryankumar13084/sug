@@ -57,6 +57,50 @@ function formatDateHindi(date) {
     return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
 }
 
+function formatDateEnglish(date) {
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function formatDateForDisplay(date, language = 'hindi') {
+    if (!isValidDate(date)) return '';
+    return language === 'english' ? formatDateEnglish(date) : formatDateHindi(date);
+}
+
+function calculateDaysSinceConception(conceptionDate) {
+    const now = new Date();
+    const conception = new Date(conceptionDate);
+
+    if (conception > now) {
+        return 0;
+    }
+
+    const daysDifference = Math.floor((now - conception) / (24 * 60 * 60 * 1000));
+    return daysDifference;
+}
+
+function getTrimester(week) {
+    if (week < 1) return 0;
+    if (week <= 12) return 1;
+    if (week <= 27) return 2;
+    return 3;
+}
+
+function getTrimesterText(week, language = 'hindi') {
+    const trimester = getTrimester(week);
+    if (language === 'english') {
+        const map = { 0: '', 1: '1st trimester', 2: '2nd trimester', 3: '3rd trimester' };
+        return map[trimester];
+    } else {
+        const map = { 0: '', 1: 'पहली तिमाही', 2: 'दूसरी तिमाही', 3: 'तीसरी तिमाही' };
+        return map[trimester];
+    }
+}
+
 function isValidConceptionDate(date) {
     if (!isValidDate(date)) return false;
 
@@ -75,5 +119,10 @@ module.exports = {
     isValidDate,
     parseDate,
     formatDateHindi,
+    formatDateEnglish,
+    formatDateForDisplay,
+    calculateDaysSinceConception,
+    getTrimester,
+    getTrimesterText,
     isValidConceptionDate
 };
