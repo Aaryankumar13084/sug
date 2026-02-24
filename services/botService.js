@@ -19,6 +19,7 @@ class BotService {
         this.suggestionService = new SuggestionService();
         this.userStates = new Map(); // Track user conversation states
         this.webSessions = new Map(); // Track web chat conversation history
+        this.suggestionCache = new Map(); // Temporarily store suggestions for Telegram callbacks
     }
 
     async handleWebMessage(message, language, sessionId, chatSessionId) {
@@ -652,6 +653,45 @@ Or type /help for more information.`;
                 await this.handleFeedback(chatId, data, callbackQuery.from.id);
             } else if (data.startsWith('health_')) {
                 await this.handleHealthCheck(chatId, data, callbackQuery.from.id);
+            } else if (data.startsWith('suggestion_')) {
+                // Handle suggestion button click
+                try {
+                    // Parse callback_data: "suggestion_chatId_index"
+                    const parts = data.split('_');
+                    if (parts.length >= 3) {
+                        const cachedChatId = parts[1];
+                        const index = parseInt(parts[2], 10);
+
+                        // Get suggestions from cache
+                        const cacheKey = `${cachedChatId}`;
+                        const cachedSuggestions = this.suggestionCache.get(cacheKey);
+
+                        if (cachedSuggestions && cachedSuggestions[index]) {
+                            const suggestionText = cachedSuggestions[index];
+                            console.log(`[Telegram] 💡 Suggestion clicked: "${suggestionText}"`);
+
+                            // Get user to pass to AI
+                            const user = await User.findOne({ telegramId: chatId.toString() });
+
+                            if (user) {
+                                // Send the suggestion as a regular AI question
+                                await this.handleAutomaticAIResponse(chatId, suggestionText, user);
+                            } else {
+                                console.error(`[Telegram] ❌ User not found for suggestion click`);
+                            }
+                        } else {
+                            console.error(`[Telegram] ❌ Suggestion not found in cache (expired or invalid)`);
+                            const user = await User.findOne({ telegramId: chatId.toString() });
+                            const language = user?.language || 'hindi';
+                            const expiredMsg = language === 'english'
+                                ? '⚠️ This suggestion has expired. Please ask a new question.'
+                                : '⚠️ यह सुझाव समाप्त हो गया है। कृपया नया प्रश्न पूछें।';
+                            await this.bot.sendMessage(chatId, expiredMsg);
+                        }
+                    }
+                } catch (parseError) {
+                    console.error('[Telegram] Error parsing suggestion callback:', parseError);
+                }
             } else if (data === 'need_doctor') {
                 const user = await User.findOne({ telegramId: chatId.toString() });
                 const language = user?.language || 'hindi';
@@ -1157,14 +1197,18 @@ Please reference the user's current pregnancy stage in your response when releva
 
             await user.save();
 
-            // Generate smart suggestions based on session history
+            // Generate smart suggestions based on LAST 2 MESSAGES only
             console.log(`\n[Telegram] 🔍 GENERATING SUGGESTIONS`);
             console.log(`[Telegram] User: ${user.firstName}, Language: ${user.language}`);
             console.log(`[Telegram] Message: "${text.substring(0, 50)}..."`);
-            console.log(`[Telegram] History entries: ${user.conversationHistory.length}`);
+            console.log(`[Telegram] Total history entries: ${user.conversationHistory.length}`);
+
+            // Use only last 2 messages for suggestions (more focused)
+            const recentHistoryForSuggestions = user.conversationHistory.slice(-2);
+            console.log(`[Telegram] Using last ${recentHistoryForSuggestions.length} messages for suggestions`);
 
             const suggestions = await this.suggestionService.getSuggestions(
-                user.conversationHistory,
+                recentHistoryForSuggestions,
                 text,
                 user.language
             );
@@ -1198,11 +1242,21 @@ Please reference the user's current pregnancy stage in your response when releva
             // Add suggestion buttons if available
             if (suggestions && suggestions.length > 0) {
                 console.log(`[Telegram] 📌 Adding ${suggestions.length} suggestion buttons`);
-                suggestions.forEach(suggestion => {
+
+                // Store suggestions in cache with chatId key
+                const cacheKey = `${chatId}`;
+                this.suggestionCache.set(cacheKey, suggestions);
+
+                // Auto-clear cache after 10 minutes
+                setTimeout(() => {
+                    this.suggestionCache.delete(cacheKey);
+                }, 10 * 60 * 1000);
+
+                suggestions.forEach((suggestion, index) => {
                     keyboardRows.push([
                         {
                             text: suggestion.substring(0, 50) + (suggestion.length > 50 ? '...' : ''),
-                            callback_data: `suggestion_${Buffer.from(suggestion).toString('base64').substring(0, 50)}`
+                            callback_data: `suggestion_${chatId}_${index}`
                         }
                     ]);
                 });
