@@ -155,8 +155,52 @@ class BotService {
                 history = sessionId ? (this.webSessions.get(sessionId) || []) : [];
             }
 
-            // Generate AI response with conversation history
-            const aiResponse = await this.geminiService.generateResponse(message, langFull, history);
+            // Get registered user to add pregnancy context (same as Telegram)
+            let user = null;
+            try {
+                user = await User.findOne({ sessionId: sessionId, consentGiven: true });
+            } catch (e) {
+                console.error('Error fetching user for web chat:', e);
+            }
+
+            // Build pregnancy context (same as Telegram bot)
+            let fullMessage = message;
+            if (user && user.dueDate) {
+                const currentWeek = calculatePregnancyWeek(user.dueDate);
+                const daysSinceConception = calculateDaysSinceConception(user.dueDate);
+                const trimester = getTrimester(currentWeek);
+                const trimesterText = getTrimesterText(currentWeek, langFull);
+                const conceptionDateFormatted = formatDateForDisplay(new Date(user.dueDate), langFull);
+                const todayFormatted = formatDateForDisplay(new Date(), langFull);
+
+                const pregnancyContext = langFull === 'english'
+                    ? `\n\nComprehensive Pregnancy Information:
+- Conception Date: ${conceptionDateFormatted}
+- Current Date: ${todayFormatted}
+- Days Since Conception: ${daysSinceConception} days
+- Current Week: Week ${currentWeek} of 42
+- Trimester: ${trimesterText}
+
+Please reference the user's current pregnancy stage in your response when relevant.`
+                    : `\n\nव्यापक गर्भावस्था जानकारी:
+- गर्भधारण की तिथि: ${conceptionDateFormatted}
+- आज की तिथि: ${todayFormatted}
+- गर्भधारण से दिन: ${daysSinceConception} दिन
+- वर्तमान सप्ताह: 42 में से ${currentWeek}वां सप्ताह
+- तिमाही: ${trimesterText}
+
+कृपया जब प्रासंगिक हो तो अपने उत्तर में उपयोगकर्ता की वर्तमान गर्भावस्था अवस्था का संदर्भ दें।`;
+
+                // Add response style context
+                const responseStyleContext = langFull === 'english'
+                    ? '\n\nIMPORTANT: Prioritize home remedies and natural solutions. Do NOT suggest medicines unless I specifically ask for medicine. Keep your answer SHORT (3-5 bullet points). Only give detailed answer if I ask for more detail.'
+                    : '\n\nमहत्वपूर्ण: पहले देसी नुस्खे और घरेलू उपाय बताएं। दवाई तभी बताएं जब मैं खुद पूछूं। छोटा जवाब दें (3-5 बुलेट पॉइंट)। विस्तार से तभी बताएं जब मैं कहूं।';
+
+                fullMessage = message + pregnancyContext + responseStyleContext;
+            }
+
+            // Generate AI response with conversation history and pregnancy context
+            const aiResponse = await this.geminiService.generateResponse(fullMessage, langFull, history);
 
             // Save to DB session history
             if (chatSessionId && sessionDoc) {
