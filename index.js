@@ -25,7 +25,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // Get bot token from environment
-const BOT_TOKEN = '7576551177:AAExz4LaTshH5mJnmEhgbVMK_D4icGfh7hs';
+const BOT_TOKEN = 'process.env.TELEGRAM_BOT_TOKEN';
 
 if (!BOT_TOKEN) {
     console.error('TELEGRAM_BOT_TOKEN is required in environment variables');
